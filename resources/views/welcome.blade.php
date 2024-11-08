@@ -53,6 +53,7 @@
                                             Register
                                         </a>
                                     @endif
+                                    <h1>test</h1>
                                 @endauth
                             </nav>
                         @endif
