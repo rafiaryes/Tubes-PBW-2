@@ -25,25 +25,25 @@ class MenuController extends Controller
         if($request->ajax()) {
             $menus = Model::latest()->get();
             return DataTables::of($menus)
-            ->addColumn('status', function ($model) {
-                return $model->status ? 'Aktif' : 'Non-Aktif';
+            ->addColumn('status', function ($row) {
+                return $row->status ? 'Aktif' : 'Non-Aktif';
             })
-            ->addColumn('foto_menu', function ($model) {
-                return '<img src="' . asset("storage/$model->image") . '" width="100" class="mt-2">';
+            ->addColumn('foto_menu', function ($row) {
+                return '<img src="' . asset("storage/$row->image") . '" width="100" class="mt-2">';
             })
-            ->addColumn('action', function ($model) {
+            ->addColumn('action', function ($row) {
                 // Directly return the action buttons
                 return '
-                    <a href="' . route($this->routePrefix . '.edit', $model->id) . '" class="btn btn-primary btn-sm">Edit</a>
-                    <form action="' . route($this->routePrefix . '.destroy', $model->id) . '" method="POST" style="display:inline;" class="delete-form">
+                    <a href="' . route($this->routePrefix . '.edit', $row->id) . '" class="btn btn-primary btn-sm">Edit</a>
+                    <form action="' . route($this->routePrefix . '.destroy', $row->id) . '" method="POST" style="display:inline;" class="delete-form">
                         ' . csrf_field() . '
                         ' . method_field('DELETE') . '
                         <button type="submit" class="btn btn-danger btn-sm delete-button">Hapus</button>
                     </form>
-                    <form action="' . route($this->routePrefix . '.status', $model->id) . '" method="POST" style="display:inline;">
+                    <form action="' . route($this->routePrefix . '.status', $row->id) . '" method="POST" style="display:inline;">
                         ' . csrf_field() . '
-                        <button type="submit" class="btn btn-sm ' . ($model->status ? 'btn-success' : 'btn-danger') . '">
-                            ' . ($model->status ? 'Aktif' : 'Non-Aktif') . '
+                        <button type="submit" class="btn btn-sm ' . ($row->status ? 'btn-success' : 'btn-danger') . '">
+                            ' . ($row->status ? 'Aktif' : 'Non-Aktif') . '
                         </button>
                     </form>
                 ';
@@ -80,12 +80,12 @@ class MenuController extends Controller
     {
         DB::beginTransaction();
         try {
-            $menu = Model::create([
+            Model::create([
                 'nama' => $request['nama'],
                 'deskripsi' => $request['deskripsi'],
                 'price' => $request['price'],
                 'stok' => $request['stok'],
-                'status' => $request['status'] ?? true, // default aktif jika tidak disetel
+                'status' => $request['stok'] > 0, // default aktif jika tidak disetel
                 'image' => $request->file('image')->store('menus'),
             ]);
 
@@ -137,8 +137,7 @@ class MenuController extends Controller
                 'nama' => $request['nama'],
                 'deskripsi' => $request['deskripsi'],
                 'price' => $request['price'],
-                'stok' => $request['stok'],
-                'status' => $request['status'],
+                'stok' => $request['stok'],                
             ];
 
             $model = Model::findOrFail($menu->id);

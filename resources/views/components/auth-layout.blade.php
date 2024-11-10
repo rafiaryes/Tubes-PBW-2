@@ -18,9 +18,10 @@
         rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link href="{{ asset("startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.min.css") }}" rel="stylesheet">
-
+    
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    <link href="{{ asset("startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.min.css") }}" rel="stylesheet">
+    @stack('css')
 </head>
 
 <body class="bg-gradient-primary">

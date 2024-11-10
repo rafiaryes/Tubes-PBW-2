@@ -44,19 +44,7 @@
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
-            </div>
-            <div class="form-group">
-                <label for="status">Status</label>
-                <select name="status" class="form-control @error('status') is-invalid @enderror" required>
-                    <option value="1" {{ old('status', $model->status) ? 'selected' : '' }}>Aktif</option>
-                    <option value="0" {{ !old('status', $model->status) ? 'selected' : '' }}>Non-Aktif</option>
-                </select>
-                @error('status')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
-            </div>
+            </div>          
             <div class="form-group">
                 <label for="image">Gambar</label>
                 <input type="file" name="image" class="form-control @error('image') is-invalid @enderror"
