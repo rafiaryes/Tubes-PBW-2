@@ -24,7 +24,7 @@
                 </div>
             @else
                 <!-- If the user is not logged in, show the login and register buttons -->
-                <div class="d-flex gao-4">
+                <div class="d-flex gap-4">
                     <a href="{{ route('login') }}" class="btn btn-primary btn-lg">Login</a>
                     <a href="{{ route('register') }}" class="btn btn-secondary btn-lg">Register</a>
                 </div>

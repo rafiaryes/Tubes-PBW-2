@@ -14,65 +14,67 @@
                 @endforeach
             </ol>
         </div>
-        <form action="{{ $route }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ $route }}" method="POST">
             @csrf
             @if ($method === 'PUT')
                 @method('PUT')
             @endif
             <div class="form-group">
-                <label for="nama">Nama Menu</label>
-                <input type="text" name="nama" class="form-control @error('nama') is-invalid @enderror"
-                    value="{{ old('nama', $model->nama) }}" required>
-                @error('nama')
+                <label for="name">Nama</label>
+                <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
+                    value="{{ old('name', $model->name) }}" required>
+                @error('name')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
             </div>
             <div class="form-group">
-                <label for="deskripsi">Deskripsi</label>
-                <textarea name="deskripsi" class="form-control @error('deskripsi') is-invalid @enderror" required>{{ old('deskripsi', $model->deskripsi) }}</textarea>
-                @error('deskripsi')
+                <label for="email">Email</label>
+                <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
+                    value="{{ old('email', $model->email) }}" required>
+                @error('email')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
             </div>
             <div class="form-group">
-                <label for="price">Harga</label>
-                <input type="number" name="price" class="form-control @error('price') is-invalid @enderror"
-                    value="{{ old('price', $model->price) }}" required>
-                @error('price')
+                <label for="password">Password</label>
+                <input type="password" name="password" class="form-control @error('password') is-invalid @enderror"
+                    {{ $method === 'POST' ? 'required' : '' }}>
+                @error('password')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
             </div>
             <div class="form-group">
-                <label for="stok">Stok</label>
-                <input type="number" name="stok" class="form-control @error('stok') is-invalid @enderror"
-                    value="{{ old('stok', $model->stok) }}" required>
-                @error('stok')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
-            </div>          
-            <div class="form-group">
-                <label for="image">Gambar</label>
-                <input type="file" name="image" class="form-control @error('image') is-invalid @enderror"
-                    {{ $method === 'POST' ? 'required' : '' }} onchange="previewImage(event)">
-                @if ($model->image)
-                    <img src="{{ asset('storage/' . $model->image) }}" id="imagePreview" width="400" class="mt-2">
-                @else
-                    <img id="imagePreview" width="400" class="mt-2" style="display:none;">
-                @endif
-                @error('image')
+                <label for="password_confirmation">Konfirmasi Password</label>
+                <input type="password" name="password_confirmation" class="form-control @error('password_confirmation') is-invalid @enderror"
+                    {{ $method === 'POST' ? 'required' : '' }}>
+                @error('password_confirmation')
                     <span class="invalid-feedback" role="alert">
                         <strong>{{ $message }}</strong>
                     </span>
                 @enderror
             </div>
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select name="role" class="form-control @error('role') is-invalid @enderror" required>
+                    <option value="">Pilih Role</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role->name }}" {{ old('role', $model->roles->pluck('name')->first()) === $role->name ? 'selected' : '' }}>
+                            {{ $role->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('role')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>            
             <button type="submit" class="btn btn-primary mb-2">{{ $button }}</button>
         </form>
     </div>
