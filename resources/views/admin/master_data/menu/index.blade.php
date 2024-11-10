@@ -11,12 +11,11 @@
                     <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>No</th>
                                 <th>Nama</th>
                                 <th>Deskripsi</th>
                                 <th>Harga</th>
-                                <th>Stok</th>
-                                <th>Status</th>
+                                <th>Stok</th>                                
                                 <th>Foto Menu</th>
                                 <th>Actions</th>
                             </tr>
@@ -35,12 +34,11 @@
                     serverSide: true,
                     ajax: '{{ route($routePrefix . '.index') }}', // Make sure this matches your controller's route
                     columns: [
-                        { data: 'id', name: 'id' },
+                        { data: 'DT_RowIndex', name: 'DT_RowIndex'},
                         { data: 'nama', name: 'nama' },
                         { data: 'deskripsi', name: 'deskripsi' },
                         { data: 'price', name: 'price' },
-                        { data: 'stok', name: 'stok' },
-                        { data: 'status', name: 'status' },
+                        { data: 'stok', name: 'stok' },                        
                         { data: 'foto_menu', name: 'foto_menu', orderable: false, searchable: false },
                         { data: 'action', name: 'action', orderable: false, searchable: false }
                     ]

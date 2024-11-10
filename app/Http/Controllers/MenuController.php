@@ -25,9 +25,7 @@ class MenuController extends Controller
         if($request->ajax()) {
             $menus = Model::latest()->get();
             return DataTables::of($menus)
-            ->addColumn('status', function ($row) {
-                return $row->status ? 'Aktif' : 'Non-Aktif';
-            })
+            ->addIndexColumn()        
             ->addColumn('foto_menu', function ($row) {
                 return '<img src="' . asset("storage/$row->image") . '" width="100" class="mt-2">';
             })
