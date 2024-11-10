@@ -20,11 +20,10 @@
         rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">    
     <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+    <link href="{{ asset('startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.css') }}" rel="stylesheet">    
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <link href="{{ asset('startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.css') }}" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -86,8 +85,15 @@
                 </div>
                 <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="login.html">Logout</a>
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>                   
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf   
+                        <button class="btn btn-primary">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <a><span class="font-medium transition-all duration-200 ">Log Out</span></a>
+                        </button>               
+                    </form>    
                 </div>
             </div>
         </div>

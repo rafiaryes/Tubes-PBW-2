@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -19,13 +20,19 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('roles', RoleController::class);
-    Route::resource('users', UserController::class);
-
-    Route::prefix('admin/master_data')->name('admin.')->group(function () {
-        Route::resource('menu', MenuController::class);
-        Route::post('menu/{menu}/status', [MenuController::class, 'status'])->name('menu.status');
+    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::prefix('master_data')->name('master_data.')->group(function () {
+            Route::resource('menu', MenuController::class);
+            Route::post('menu/{menu}/status', [MenuController::class, 'status'])->name('menu.status');
+        
+            Route::resource('role', RoleController::class);
+            Route::resource('permission', PermissionController::class);
+        
+            Route::resource('user', UserController::class);
+            Route::post('user/{user}/status', [UserController::class, 'status'])->name('user.status');
+        });
     });
+    
     
 });
 

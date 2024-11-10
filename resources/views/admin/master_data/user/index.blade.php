@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="container-fluid">
-        <!-- Display Breadcrumbs -->
-        <div aria-label="breadcrumb">
+         <!-- Display Breadcrumbs -->
+         <div aria-label="breadcrumb">
             <ol class="breadcrumb">
                 @foreach (Breadcrumbs::generate() as $breadcrumb)
                     <li class="breadcrumb-item">
@@ -15,9 +15,9 @@
             </ol>
         </div>
         <div class="card shadow mb-4">
-            <div class="card-header py-3 py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Master Data Menu</h6>
-                <a href="{{ route($routePrefix . '.create') }}" class="btn btn-success btn-sm">Tambah Menu</a>
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Master Data User</h6>
+                <a href="{{ route($routePrefix . '.create') }}" class="btn btn-success btn-sm">Tambah User</a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -26,13 +26,11 @@
                             <tr>
                                 <th>No</th>
                                 <th>Nama</th>
-                                <th>Deskripsi</th>
-                                <th>Harga</th>
-                                <th>Stok</th>                                
-                                <th>Foto Menu</th>
+                                <th>Email</th>
+                                <th>Roles</th>                                
                                 <th>Actions</th>
                             </tr>
-                        </thead>                        
+                        </thead>
                     </table>
                 </div>
             </div>
@@ -45,14 +43,12 @@
                 $('#dataTable').DataTable({
                     processing: true,
                     serverSide: true,
-                    ajax: '{{ route($routePrefix . '.index') }}', // Make sure this matches your controller's route
+                    ajax: '{{ route($routePrefix . '.index') }}', // Match this to the controller's route for User data
                     columns: [
-                        { data: 'DT_RowIndex', name: 'DT_RowIndex'},
-                        { data: 'nama', name: 'nama' },
-                        { data: 'deskripsi', name: 'deskripsi' },
-                        { data: 'price', name: 'price' },
-                        { data: 'stok', name: 'stok' },                        
-                        { data: 'foto_menu', name: 'foto_menu', orderable: false, searchable: false },
+                        { data: 'DT_RowIndex', name: 'DT_RowIndex' },
+                        { data: 'name', name: 'name' },
+                        { data: 'email', name: 'email' },
+                        { data: 'roles', name: 'roles', orderable: false, searchable: false },                        
                         { data: 'action', name: 'action', orderable: false, searchable: false }
                     ]
                 });
