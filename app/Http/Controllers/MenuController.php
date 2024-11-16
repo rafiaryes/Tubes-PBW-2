@@ -134,7 +134,8 @@ class MenuController extends Controller
                 'nama' => $request['nama'],
                 'deskripsi' => $request['deskripsi'],
                 'price' => $request['price'],
-                'stok' => $request['stok'],                
+                'stok' => $request['stok'],
+                'status' => $request['stok'] > 0,                
             ];
 
             $model = Model::findOrFail($menu->id);
