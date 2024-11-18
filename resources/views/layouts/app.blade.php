@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Kantin Pintar - Dashboard</title>
+    <title>Dapo Smart - Dashboard</title>
 
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     <!-- Custom fonts for this template-->
@@ -89,7 +89,7 @@
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf   
-                        <button class="btn btn-primary">
+                        <button class="btn btn-info">
                             <i class="fas fa-sign-out-alt"></i>
                             <a><span class="font-medium transition-all duration-200 ">Log Out</span></a>
                         </button>               

@@ -50,7 +50,7 @@
                         { data: 'DT_RowIndex', name: 'DT_RowIndex'},
                         { data: 'nama', name: 'nama' },
                         { data: 'deskripsi', name: 'deskripsi' },
-                        { data: 'price', name: 'price' },
+                        { data: 'formatted_price', name: 'formatted_price' },
                         { data: 'stok', name: 'stok' },                        
                         { data: 'foto_menu', name: 'foto_menu', orderable: false, searchable: false },
                         { data: 'action', name: 'action', orderable: false, searchable: false }

@@ -24,7 +24,10 @@ class MenuController extends Controller
         if($request->ajax()) {
             $menus = Model::latest()->get();
             return DataTables::of($menus)
-            ->addIndexColumn()        
+            ->addIndexColumn()       
+            ->addColumn('formatted_price', function ($row) {
+                return 'Rp ' . number_format($row->price, 2, ",", ".");
+            }) 
             ->addColumn('foto_menu', function ($row) {
                 return '<img src="' . asset("storage/$row->image") . '" width="100" class="mt-2">';
             })
