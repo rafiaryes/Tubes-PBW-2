@@ -1,12 +1,12 @@
  <!-- Sidebar -->
- <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+ <ul class="navbar-nav bg-gradient-info sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-laugh-wink"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">Kantin Pintar</div>
+        <div class="sidebar-brand-text mx-3">Dapo Smart</div>
     </a>
 
     <!-- Divider -->
@@ -36,7 +36,9 @@
         <div id="collapseMasterData" class="collapse {{ request()->is('admin/master_data*') ? 'show' : '' }}" aria-labelledby="headingMasterData" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Data Management:</h6>                
-                <a class="collapse-item {{ request()->is('admin/master_data/menu*') ? 'active' : '' }}" href="{{ route('admin.master_data.menu.index') }}">Menu</a>              
+                @can("menu.view")
+                <a class="collapse-item {{ request()->is('admin/master_data/menu*') ? 'active' : '' }}" href="{{ route('admin.master_data.menu.index') }}">Menu</a>
+                @endcan              
                 <a class="collapse-item {{ request()->is('admin/master_data/user*') ? 'active' : '' }}" href="{{ route('admin.master_data.user.index') }}">User</a>               
                 <a class="collapse-item {{ (request()->is('admin/master_data/role*') || request()->is('admin/master_data/permission*')) ? 'active' : '' }}" href="{{ route('admin.master_data.role.index') }}">Role & Permission</a> <!-- Menambahkan Role -->                 
                 <!-- Tambahkan item lain di sini sesuai kebutuhan -->

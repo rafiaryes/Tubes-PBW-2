@@ -10,14 +10,8 @@ use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
-    {
-        $adminPermission = Role::firstOrCreate(['name' => 'admin']);
-        Role::firstOrCreate(['name' => 'kasir']);
-        Role::firstOrCreate(['name' => 'toko']);
+    
+  public function run(): void{$adminRole = Role::firstOrCreate(['name' => 'admin']);Role::firstOrCreate(['name' => 'kasir']);Role::firstOrCreate(['name' => 'toko']);
 
         $users = [
             [
@@ -47,9 +41,8 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
-            User::create($user);
             $user = User::create(attributes: $user);
-            $user->givePermissionTo($adminPermission);
+            $user->assignRole($adminRole);
         }
     }
 }
