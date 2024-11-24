@@ -13,11 +13,9 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->bigIncrements("id")->primary(true);
-            $table->string("order_status");
+            $table->string("status");
             $table->bigInteger("total_price");
-            $table->timestamp("order_date");
-            $table->timestamp("updated_at");
-            $table->string("delivery_type");
+            $table->timestamps();
         });
     }
 
