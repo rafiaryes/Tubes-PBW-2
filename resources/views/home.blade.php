@@ -47,6 +47,7 @@
             let searchQuery = $("#search").val();
             let page = 1;
             const loadMoreLimit = 12;
+            let filterByCategory = "";
 
             // Fungsi untuk memuat data berdasarkan pencarian
             function loadSearchResults(query = '', page = 1, isLoadMore = false) {
@@ -71,6 +72,7 @@
                         search: query, // Kirimkan query pencarian ke server,
                         page: page, // Mengirim halaman ke server
                         limit: loadMoreLimit, // Mengirim jumlah data yang diinginkan
+                        category: filterByCategory
                     },
                     signal: signal, // Menghubungkan signal dari AbortController
                     success: function(response) {
@@ -117,6 +119,13 @@
                 loadSearchResults(searchQuery, page, true); // Memanggil fungsi pencarian
             });
 
+            $(document).on('click', '#btnCategory', function() {
+                page = 1;
+                filterByCategory = $(this).data('category');
+                console.log(filterByCategory);
+                loadSearchResults(searchQuery);
+            });
+
             // Memanggil fungsi untuk load data pertama kali jika ada query yang ada
             loadSearchResults();
         });
@@ -128,12 +137,15 @@
         <div class="row no-gutters" style="min-height: 100vh; display: flex;">
             <!-- Left Sidebar (fixed) -->
             <div class="p-3 d-flex flex-column justify-content-center align-items-center"
-                 style="background: #2D9CAD; position: sticky; top: 0; height: 100vh; width: 250px; z-index: 1;">
+                style="background: #2D9CAD; position: sticky; top: 0; height: 100vh; width: 250px; z-index: 1;">
                 <div class="gap-3 d-flex flex-column align-items-center w-100">
-                    <a href="#" class="btn btn-light rounded-pill w-100">Beranda</a>
-                    <a href="#" class="btn btn-light rounded-pill w-100">Makanan</a>
-                    <a href="#" class="btn btn-light rounded-pill w-100">Minuman</a>
-                    <a href="#" class="btn btn-light rounded-pill w-100">Cemilan</a>
+                    <button id="btnCategory" data-category="" class="btn btn-light rounded-pill w-100">Beranda</button>
+                    <button id="btnCategory" data-category="makanan"
+                        class="btn btn-light rounded-pill w-100">Makanan</button>
+                    <button id="btnCategory" data-category="minuman"
+                        class="btn btn-light rounded-pill w-100">Minuman</button>
+                    <button id="btnCategory" data-category="cemilan"
+                        class="btn btn-light rounded-pill w-100">Cemilan</button>
                 </div>
             </div>
 

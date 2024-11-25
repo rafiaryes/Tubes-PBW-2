@@ -25,6 +25,11 @@ Route::name('user.')->group(function () {
             $menusQuery = Menu::select('id', 'nama', 'price', 'stok', 'image');
 
             // Jika ada pencarian
+
+            if ($request->input('category') && !empty($request->category)) {
+                $menusQuery->where('category', 'like', '%' . $request->category . '%');
+            }
+
             if ($request->input('search') && !empty($request->search)) {
                 $menusQuery->where('nama', 'like', '%' . $request->search . '%');
             }

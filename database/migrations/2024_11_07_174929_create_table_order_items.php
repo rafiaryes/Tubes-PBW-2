@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer("quantity");
             $table->integer("price");
             $table->foreign("order_id")->references("id")->on("orders")->onDelete("CASCADE");
-            $table->foreign("menu_id")->references("id")->on("menus")->onDelete("CASCADE");
+            $table->foreign("menu_id")->references("id")->on("menu")->onDelete("CASCADE");
         });
     }
 

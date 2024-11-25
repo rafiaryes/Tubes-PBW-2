@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->bigIncrements("id")->primary(true);
             $table->string("status");
+            $table->string("payment_method");
+            $table->string("order_method");
             $table->bigInteger("total_price");
             $table->timestamps();
         });
