@@ -43,66 +43,56 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            let currentRequest = null; // Variabel untuk menyimpan request AJAX sebelumnya
+            let currentRequest = null;
             let searchQuery = $("#search").val();
             let page = 1;
             const loadMoreLimit = 12;
             let filterByCategory = "";
+            let isLoading = false; // Untuk mencegah permintaan ganda
 
-            // Fungsi untuk memuat data berdasarkan pencarian
             function loadSearchResults(query = '', page = 1, isLoadMore = false) {
-                // Jika ada request sebelumnya yang belum selesai, batalkan requestnya
-                if (currentRequest) {
-                    currentRequest.abort(); // Membatalkan request yang sedang berjalan
-                }
+                if (isLoading) return; // Mencegah permintaan jika sedang memuat data
 
-                // Membuat AbortController baru untuk request yang akan datang
-                const controller = new AbortController();
-                const signal = controller.signal;
-
-                // Menampilkan elemen loading
+                isLoading = true; // Tandai proses loading aktif
                 $('#loading').show();
 
-                // Menyimpan referensi request AJAX saat ini di dalam currentRequest
+                if (currentRequest) {
+                    currentRequest.abort(); // Batalkan request sebelumnya
+                }
+
                 currentRequest = $.ajax({
-                    url: "{{ route('user.home') }}", // Ganti dengan route yang sesuai
+                    url: "{{ route('user.home') }}", // Ganti dengan route Anda
                     type: 'GET',
                     dataType: 'json',
                     data: {
-                        search: query, // Kirimkan query pencarian ke server,
-                        page: page, // Mengirim halaman ke server
-                        limit: loadMoreLimit, // Mengirim jumlah data yang diinginkan
+                        search: query,
+                        page: page,
+                        limit: loadMoreLimit,
                         category: filterByCategory
                     },
-                    signal: signal, // Menghubungkan signal dari AbortController
                     success: function(response) {
-                        // Menyembunyikan elemen loading
                         $('#loading').hide();
-
                         if (response.html) {
                             if (isLoadMore) {
                                 $('#menu-container').append(response.html);
                             } else {
                                 $('#menu-container').html(response.html);
                             }
-                        } else {
+                        } else if (!isLoadMore) {
                             $('#menu-container').html('<p>No menus found.</p>');
                         }
 
+                        isLoading = false; // Tandai proses loading selesai
                         if (!response.hasMore) {
-                            $('#load-more-btn').hide();
-                        } else {
-                            $('#load-more-btn').show();
+                            observer.disconnect(); // Hentikan observer jika tidak ada data lagi
                         }
                     },
                     error: function(xhr, status, error) {
-                        // Menyembunyikan elemen loading jika terjadi error
                         $('#loading').hide();
-
-                        // Cek jika error disebabkan oleh request yang dibatalkan
                         if (status !== 'abort') {
                             console.error('Error fetching data:', error);
                         }
+                        isLoading = false; // Tandai proses loading selesai meski ada error
                     }
                 });
             }
@@ -111,22 +101,43 @@
             $('#search').on('input', function() {
                 page = 1;
                 searchQuery = $(this).val();
-                loadSearchResults(searchQuery); // Memanggil fungsi pencarian
-            });
-
-            $('#load-more-btn').on('click', function() {
-                page++; // Tambahkan halaman untuk memuat data selanjutnya
-                loadSearchResults(searchQuery, page, true); // Memanggil fungsi pencarian
+                loadSearchResults(searchQuery);
             });
 
             $(document).on('click', '#btnCategory', function() {
                 page = 1;
                 filterByCategory = $(this).data('category');
-                console.log(filterByCategory);
-                loadSearchResults(searchQuery);
+
+                // Scroll ke atas sebelum memuat ulang data
+                $('html, body').animate({
+                    scrollTop: 0
+                }, 'fast', function() {
+                    setTimeout(() => {
+                        loadSearchResults(searchQuery);
+                    }, 500);
+                });
+
+                observer.observe(document.querySelector(
+                '#sentinel')); // Mulai observasi pada elemen sentinel
             });
 
-            // Memanggil fungsi untuk load data pertama kali jika ada query yang ada
+            // Intersection Observer untuk Infinite Scroll
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && !isLoading) {
+                    setTimeout(() => {
+                        page++;
+                        loadSearchResults(searchQuery, page, true);
+                    }, 400);
+                }
+            }, {
+                root: null, // Menggunakan viewport sebagai root
+                rootMargin: '0px', // Margin tambahan di sekitar root
+                threshold: 0.5 // Persentase elemen yang harus terlihat sebelum memuat lebih banyak
+            });
+
+            observer.observe(document.querySelector('#sentinel')); // Mulai observasi pada elemen sentinel
+
+            // Muat data awal
             loadSearchResults();
         });
     </script>
@@ -171,7 +182,7 @@
                         <span class="sr-only">Loading...</span>
                     </div>
                 </div>
-                <button id="load-more-btn" class="btn btn-primary btn-block" style="display: block;">Load More</button>
+                <div id="sentinel" style="height: 1px; margin-bottom: 60px"></div>
                 <!-- More content goes here -->
             </div>
         </div>
