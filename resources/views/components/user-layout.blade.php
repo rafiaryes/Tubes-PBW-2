@@ -49,7 +49,33 @@
 
     @stack('scripts')
 
+    @if (session()->has('id_order'))
+        <script>
+            // Retrieve the order ID from session
+            var orderId = @json(session('id_order'));
+
+            // Get orders from localStorage, if any, or initialize an empty array
+            var orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+            // Push the new order ID to the orders array
+            orders.push(orderId);
+
+            // Store the updated orders array back to localStorage
+            localStorage.setItem('orders', JSON.stringify(orders));
+            localStorage.setItem('cart', JSON.stringify([]));
+
+            console.log('Order ID added to localStorage:', orderId);
+        </script>
+    @endif
     <script>
+        if (!localStorage.getItem('order_method')) {
+            localStorage.setItem('order_method', 'dine_in');
+        }
+
+        if (!localStorage.getItem('payment_method')) {
+            localStorage.setItem('payment_method', 'pay_in_casher');
+        }
+
         function previewImage(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -129,4 +155,5 @@
         </script>
     @endif
 </body>
+
 </html>

@@ -118,7 +118,7 @@
                 });
 
                 observer.observe(document.querySelector(
-                '#sentinel')); // Mulai observasi pada elemen sentinel
+                    '#sentinel')); // Mulai observasi pada elemen sentinel
             });
 
             // Intersection Observer untuk Infinite Scroll
@@ -132,7 +132,7 @@
             }, {
                 root: null, // Menggunakan viewport sebagai root
                 rootMargin: '0px', // Margin tambahan di sekitar root
-                threshold: 0.5 // Persentase elemen yang harus terlihat sebelum memuat lebih banyak
+                threshold: 1 // Persentase elemen yang harus terlihat sebelum memuat lebih banyak
             });
 
             observer.observe(document.querySelector('#sentinel')); // Mulai observasi pada elemen sentinel
@@ -164,13 +164,20 @@
             <div class="p-3" style="flex: 1; padding-left: 20px; padding-top: 20px;">
                 <!-- Main Content Header inside the content area -->
                 <div class="mb-4">
-                    <div class="">
-                        <div class="mb-3 input-group">
-                            <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                    <div class="d-flex align-items-center">
+                        <div class="mb-3 input-group d-flex justify-content-center align-items-center">
+                            <input type="text" class="my-auto form-control" placeholder="Search" aria-label="Search"
                                 name="search" aria-describedby="button-search" id="search" value="">
+                        </div>
+                        <div class="d-flex justify-content-center align-items-center ms-2"
+                            style="width: 50px; height: 50px; border: 3px solid #EBE5DD; background-color: #F8BF40; border-radius: 50%;">
+                            <a href="{{ route("user.cart") }}">
+                                <img src="{{ asset("cart-bag.svg") }}" alt="">
+                            </a>
                         </div>
                     </div>
                 </div>
+
 
                 {{-- table disini namun nantinya akan card kesamping --}}
                 <div id="menu-container" class="row">
@@ -182,7 +189,7 @@
                         <span class="sr-only">Loading...</span>
                     </div>
                 </div>
-                <div id="sentinel" style="height: 1px; margin-bottom: 60px"></div>
+                <div id="sentinel" style="height: 1px;"></div>
                 <!-- More content goes here -->
             </div>
         </div>

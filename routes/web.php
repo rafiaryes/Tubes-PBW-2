@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -17,6 +18,9 @@ Route::name('user.')->group(function () {
     Route::get('/order-method', function () {
         return view("order_method");
     })->name('order_method');
+    Route::get('/payment-method', function () {
+        return view("payment_method");
+    })->name('payment_method');
 
     Route::get('/home', function (Request $request) {
 
@@ -54,6 +58,17 @@ Route::name('user.')->group(function () {
 
         return view("home");
     })->name('home');
+
+    Route::get('/{id}/add-menu', function(Request $request) {
+        $menu = Menu::find($request->id);
+        return view("add_item", compact('menu'));
+    })->name('add-menu');
+
+    Route::get('/cart', function(Request $request) {
+        return view("cart");
+    })->name('cart');
+
+    Route::post('/order', [OrderController::class, 'store'])->name('order.store');
 });
 
 Route::get('/dashboard', function () {
