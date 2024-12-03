@@ -43,64 +43,56 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            let currentRequest = null; // Variabel untuk menyimpan request AJAX sebelumnya
+            let currentRequest = null;
             let searchQuery = $("#search").val();
             let page = 1;
             const loadMoreLimit = 12;
+            let filterByCategory = "";
+            let isLoading = false; // Untuk mencegah permintaan ganda
 
-            // Fungsi untuk memuat data berdasarkan pencarian
             function loadSearchResults(query = '', page = 1, isLoadMore = false) {
-                // Jika ada request sebelumnya yang belum selesai, batalkan requestnya
-                if (currentRequest) {
-                    currentRequest.abort(); // Membatalkan request yang sedang berjalan
-                }
+                if (isLoading) return; // Mencegah permintaan jika sedang memuat data
 
-                // Membuat AbortController baru untuk request yang akan datang
-                const controller = new AbortController();
-                const signal = controller.signal;
-
-                // Menampilkan elemen loading
+                isLoading = true; // Tandai proses loading aktif
                 $('#loading').show();
 
-                // Menyimpan referensi request AJAX saat ini di dalam currentRequest
+                if (currentRequest) {
+                    currentRequest.abort(); // Batalkan request sebelumnya
+                }
+
                 currentRequest = $.ajax({
-                    url: "{{ route('user.home') }}", // Ganti dengan route yang sesuai
+                    url: "{{ route('user.home') }}", // Ganti dengan route Anda
                     type: 'GET',
                     dataType: 'json',
                     data: {
-                        search: query, // Kirimkan query pencarian ke server,
-                        page: page, // Mengirim halaman ke server
-                        limit: loadMoreLimit, // Mengirim jumlah data yang diinginkan
+                        search: query,
+                        page: page,
+                        limit: loadMoreLimit,
+                        category: filterByCategory
                     },
-                    signal: signal, // Menghubungkan signal dari AbortController
                     success: function(response) {
-                        // Menyembunyikan elemen loading
                         $('#loading').hide();
-
                         if (response.html) {
                             if (isLoadMore) {
                                 $('#menu-container').append(response.html);
                             } else {
                                 $('#menu-container').html(response.html);
                             }
-                        } else {
+                        } else if (!isLoadMore) {
                             $('#menu-container').html('<p>No menus found.</p>');
                         }
 
+                        isLoading = false; // Tandai proses loading selesai
                         if (!response.hasMore) {
-                            $('#load-more-btn').hide();
-                        } else {
-                            $('#load-more-btn').show();
+                            observer.disconnect(); // Hentikan observer jika tidak ada data lagi
                         }
                     },
                     error: function(xhr, status, error) {
-                        // Menyembunyikan elemen loading jika terjadi error
                         $('#loading').hide();
-
-                        // Cek jika error disebabkan oleh request yang dibatalkan
                         if (status !== 'abort') {
                             console.error('Error fetching data:', error);
                         }
+                        isLoading = false; // Tandai proses loading selesai meski ada error
                     }
                 });
             }
@@ -109,15 +101,43 @@
             $('#search').on('input', function() {
                 page = 1;
                 searchQuery = $(this).val();
-                loadSearchResults(searchQuery); // Memanggil fungsi pencarian
+                loadSearchResults(searchQuery);
             });
 
-            $('#load-more-btn').on('click', function() {
-                page++; // Tambahkan halaman untuk memuat data selanjutnya
-                loadSearchResults(searchQuery, page, true); // Memanggil fungsi pencarian
+            $(document).on('click', '#btnCategory', function() {
+                page = 1;
+                filterByCategory = $(this).data('category');
+
+                // Scroll ke atas sebelum memuat ulang data
+                $('html, body').animate({
+                    scrollTop: 0
+                }, 'fast', function() {
+                    setTimeout(() => {
+                        loadSearchResults(searchQuery);
+                    }, 500);
+                });
+
+                observer.observe(document.querySelector(
+                    '#sentinel')); // Mulai observasi pada elemen sentinel
             });
 
-            // Memanggil fungsi untuk load data pertama kali jika ada query yang ada
+            // Intersection Observer untuk Infinite Scroll
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && !isLoading) {
+                    setTimeout(() => {
+                        page++;
+                        loadSearchResults(searchQuery, page, true);
+                    }, 400);
+                }
+            }, {
+                root: null, // Menggunakan viewport sebagai root
+                rootMargin: '0px', // Margin tambahan di sekitar root
+                threshold: 1 // Persentase elemen yang harus terlihat sebelum memuat lebih banyak
+            });
+
+            observer.observe(document.querySelector('#sentinel')); // Mulai observasi pada elemen sentinel
+
+            // Muat data awal
             loadSearchResults();
         });
     </script>
@@ -128,12 +148,15 @@
         <div class="row no-gutters" style="min-height: 100vh; display: flex;">
             <!-- Left Sidebar (fixed) -->
             <div class="p-3 d-flex flex-column justify-content-center align-items-center"
-                 style="background: #2D9CAD; position: sticky; top: 0; height: 100vh; width: 250px; z-index: 1;">
+                style="background: #2D9CAD; position: sticky; top: 0; height: 100vh; width: 250px; z-index: 1;">
                 <div class="gap-3 d-flex flex-column align-items-center w-100">
-                    <a href="#" class="btn btn-light rounded-pill w-100">Beranda</a>
-                    <a href="#" class="btn btn-light rounded-pill w-100">Makanan</a>
-                    <a href="#" class="btn btn-light rounded-pill w-100">Minuman</a>
-                    <a href="#" class="btn btn-light rounded-pill w-100">Cemilan</a>
+                    <button id="btnCategory" data-category="" class="btn btn-light rounded-pill w-100">Beranda</button>
+                    <button id="btnCategory" data-category="makanan"
+                        class="btn btn-light rounded-pill w-100">Makanan</button>
+                    <button id="btnCategory" data-category="minuman"
+                        class="btn btn-light rounded-pill w-100">Minuman</button>
+                    <button id="btnCategory" data-category="cemilan"
+                        class="btn btn-light rounded-pill w-100">Cemilan</button>
                 </div>
             </div>
 
@@ -141,13 +164,20 @@
             <div class="p-3" style="flex: 1; padding-left: 20px; padding-top: 20px;">
                 <!-- Main Content Header inside the content area -->
                 <div class="mb-4">
-                    <div class="">
-                        <div class="mb-3 input-group">
-                            <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                    <div class="d-flex align-items-center">
+                        <div class="mb-3 input-group d-flex justify-content-center align-items-center">
+                            <input type="text" class="my-auto form-control" placeholder="Search" aria-label="Search"
                                 name="search" aria-describedby="button-search" id="search" value="">
+                        </div>
+                        <div class="d-flex justify-content-center align-items-center ms-2"
+                            style="width: 50px; height: 50px; border: 3px solid #EBE5DD; background-color: #F8BF40; border-radius: 50%;">
+                            <a href="{{ route("user.cart") }}">
+                                <img src="{{ asset("cart-bag.svg") }}" alt="">
+                            </a>
                         </div>
                     </div>
                 </div>
+
 
                 {{-- table disini namun nantinya akan card kesamping --}}
                 <div id="menu-container" class="row">
@@ -159,7 +189,7 @@
                         <span class="sr-only">Loading...</span>
                     </div>
                 </div>
-                <button id="load-more-btn" class="btn btn-primary btn-block" style="display: block;">Load More</button>
+                <div id="sentinel" style="height: 1px;"></div>
                 <!-- More content goes here -->
             </div>
         </div>

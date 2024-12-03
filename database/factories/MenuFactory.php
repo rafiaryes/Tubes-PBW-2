@@ -25,6 +25,7 @@ class MenuFactory extends Factory
             'stok' => $this->faker->numberBetween(1, 500), // Stok antara 1 - 500
             'status' => true,
             'image' => 'menus/' . $this->faker->image(storage_path('app/public/menus'), 640, 480, 'food', false),
+            'category' => $this->faker->randomElement(['makanan','minuman','cemilan']),
             'created_at' => now(),
             'updated_at' => now(),
         ];

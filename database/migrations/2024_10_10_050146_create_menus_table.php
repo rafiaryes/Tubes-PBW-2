@@ -18,6 +18,7 @@ return new class extends Migration
             $table->double("price");
             $table->integer("stok");
             $table->boolean("status");
+            $table->decimal('rating', 3, 1)->nullable();
             $table->string("image");
             $table->timestamps();
         });

@@ -20,9 +20,9 @@
         rel="stylesheet">
 
     <!-- Custom styles for this template-->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">    
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
-    <link href="{{ asset('startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.css') }}" rel="stylesheet">    
+    <link href="{{ asset('startbootstrap-sb-admin-2-gh-pages/css/sb-admin-2.css') }}" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 
@@ -68,7 +68,7 @@
     <!-- End of Page Wrapper -->
 
     <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top">
+    <a class="rounded scroll-to-top" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
 
@@ -85,15 +85,15 @@
                 </div>
                 <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>                   
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
 
                     <form method="POST" action="{{ route('logout') }}">
-                        @csrf   
+                        @csrf
                         <button class="btn btn-info">
                             <i class="fas fa-sign-out-alt"></i>
                             <a><span class="font-medium transition-all duration-200 ">Log Out</span></a>
-                        </button>               
-                    </form>    
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -119,6 +119,40 @@
 
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    @if (session()->has('id_order'))
+        <script>
+
+            var orderId = @json(session('id_order'));
+
+            var orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+            orders.push(orderId);
+
+            localStorage.setItem('orders', JSON.stringify(orders));
+            localStorage.setItem('cart', JSON.stringify([]));
+
+            console.log('Order ID added to localStorage:', orderId);
+        </script>
+    @endif
+
+    <script type="module">
+        import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@9.0.0/dist/esm-browser/index.js';
+
+        function storeUUID() {
+            const uuidKey = 'userUid';
+            console.log(localStorage.getItem(uuidKey))
+            if (!localStorage.getItem(uuidKey)) {
+                const uuid = uuidv4();
+                localStorage.setItem(uuidKey, uuid);
+                window.location.href = "{{ url("/") }}";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            storeUUID()
+        });
+    </script>
 
     <script>
         function previewImage(event) {

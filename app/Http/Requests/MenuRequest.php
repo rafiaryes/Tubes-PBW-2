@@ -25,8 +25,9 @@ class MenuRequest extends FormRequest
             'nama' => 'required|string|unique:menu,nama,' . ($this->menu ? $this->menu->id : 'NULL') . ',id',
             'deskripsi' => 'nullable|string',
             'price' => 'required|numeric|min:1',
-            'stok' => 'required|integer|min:0',            
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // maksimal 2MB untuk gambar
+            'stok' => 'required|integer|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'category' => 'required|in:makanan,minuman,cemilan'
         ];
     }
 }

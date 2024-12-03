@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Dapo Smart - Login</title>
 
@@ -49,7 +50,33 @@
 
     @stack('scripts')
 
+    <script type="module">
+        import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@9.0.0/dist/esm-browser/index.js';
+
+        function storeUUID() {
+            const uuidKey = 'userUid';
+            console.log(localStorage.getItem(uuidKey))
+            if (!localStorage.getItem(uuidKey)) {
+                const uuid = uuidv4();
+                localStorage.setItem(uuidKey, uuid);
+                window.location.href = "{{ url("/") }}";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            storeUUID()
+        });
+    </script>
+
     <script>
+        if (!localStorage.getItem('order_method')) {
+            localStorage.setItem('order_method', 'dine_in');
+        }
+
+        if (!localStorage.getItem('payment_method')) {
+            localStorage.setItem('payment_method', 'pay_in_casher');
+        }
+
         function previewImage(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -129,4 +156,5 @@
         </script>
     @endif
 </body>
+
 </html>

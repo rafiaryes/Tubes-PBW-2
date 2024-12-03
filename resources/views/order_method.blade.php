@@ -61,7 +61,7 @@
         <!-- Kartu di kanan (4 bagian) -->
         <div class="card-container">
             <!-- Kartu Makan di Sini -->
-            <a href="{{ route("user.home") }}" class="text-decoration-none">
+            <a href="{{ route("user.home") }}" class="text-decoration-none" onclick="setOrderMethod('dine_in')">
                 <div class="text-center shadow shadow-lg card">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">Makan di Sini</h5>
@@ -71,7 +71,7 @@
             </a>
 
             <!-- Kartu Bawa Pulang -->
-            <a href="{{ route("user.home") }}" class="text-decoration-none">
+            <a href="{{ route("user.home") }}" class="text-decoration-none" onclick="setOrderMethod('takeaway')">
                 <div class="text-center shadow shadow-lg card">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">Bawa Pulang</h5>
@@ -82,4 +82,10 @@
 
         </div>
     </div>
+    <script>
+        // Function to store order method in localStorage
+        function setOrderMethod(method) {
+            localStorage.setItem('order_method', method);
+        }
+    </script>
 </x-user-layout>

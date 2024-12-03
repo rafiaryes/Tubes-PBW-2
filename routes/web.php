@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -17,14 +18,22 @@ Route::name('user.')->group(function () {
     Route::get('/order-method', function () {
         return view("order_method");
     })->name('order_method');
+    Route::get('/payment-method', function () {
+        return view("payment_method");
+    })->name('payment_method');
 
     Route::get('/home', function (Request $request) {
 
         if (request()->ajax()) {
             // Ambil data menu dan terapkan pagination
-            $menusQuery = Menu::select('id', 'nama', 'price', 'stok', 'image');
+            $menusQuery = Menu::select('id', 'nama', 'price', 'stok', 'image')->where("stok", '>', '0');
 
             // Jika ada pencarian
+
+            if ($request->input('category') && !empty($request->category)) {
+                $menusQuery->where('category', 'like', '%' . $request->category . '%');
+            }
+
             if ($request->input('search') && !empty($request->search)) {
                 $menusQuery->where('nama', 'like', '%' . $request->search . '%');
             }
@@ -49,6 +58,22 @@ Route::name('user.')->group(function () {
 
         return view("home");
     })->name('home');
+
+    Route::get('/{id}/add-menu', function (Request $request) {
+        $menu = Menu::find($request->id);
+        return view("add_item", compact('menu'));
+    })->name('add-menu');
+
+    Route::get('/cart', function (Request $request) {
+        return view("cart");
+    })->name('cart');
+
+    Route::post('/order', [OrderController::class, 'makeOrder'])->name('order.store');
+    Route::post('/add-item', [OrderController::class, 'addItem'])->name('order.add-item');
+
+    Route::get('/get-cart', [OrderController::class, 'getCart'])->name("get-cart");
+    Route::delete('/cart/{itemId}', [OrderController::class, 'deleteItem'])->name("remove-item");
+    Route::get('/cart/{itemId}/update', [OrderController::class, 'updateQuantity'])->name("update-cart");
 });
 
 Route::get('/dashboard', function () {

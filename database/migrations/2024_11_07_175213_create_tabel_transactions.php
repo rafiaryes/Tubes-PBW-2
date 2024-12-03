@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tabel_transactions', function (Blueprint $table) {
-            $table->bigIncrements("id")->primary(true);
-            $table->unsignedBigInteger("order_id");
-            $table->timestamp("transaction_date");
-            $table->bigInteger("amount");
-            $table->foreign("order_id")->references("id")->on("orders")->onDelete("CASCADE");
-        });
+        // Schema::create('tabel_transactions', function (Blueprint $table) {
+        //     $table->bigIncrements("id")->primary(true);
+        //     $table->unsignedBigInteger("order_id");
+        //     $table->timestamp("transaction_date");
+        //     $table->bigInteger("amount");
+        //     $table->foreign("order_id")->references("id")->on("orders")->onDelete("CASCADE");
+        // });
     }
 
     /**
