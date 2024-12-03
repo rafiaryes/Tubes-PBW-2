@@ -137,8 +137,7 @@
             @csrf
             <input type="hidden" name="payment_method" id="payment_method">
             <input type="hidden" name="order_method" id="order_method">
-            <input type="hidden" name="cart" id="cart">
-            <input type="hidden" name="total_price" id="total_price">
+            <input type="hidden" name="user_id" id="user_id">
         </form>
 
         <button onclick="setPaymentAndSubmit('pay_here')" class="btn-order">
@@ -160,31 +159,27 @@
     </div>
     <script>
         window.onload = function() {
-            // Retrieve values from localStorage
             var paymentMethod = localStorage.getItem('payment_method');
             var orderMethod = localStorage.getItem('order_method');
-            var cart = localStorage.getItem('cart');
-            var totalPrice = 0;
-
-            // If cart exists in localStorage, calculate total price and set hidden inputs
-            if (cart) {
-                // Parse the cart from JSON
-                var cartItems = JSON.parse(cart);
-
-                // Calculate total price by summing the price * quantity for each item
-                cartItems.forEach(function(item) {
-                    totalPrice += item.price * item
-                    .quantity; // Assuming each item has a 'price' and 'quantity' property
-                });
-
-                // Set the total price in the hidden input field
-                document.getElementById('total_price').value = totalPrice;
-
-                // Set the cart as a string in the hidden input field
-                document.getElementById('cart').value = JSON.stringify(cartItems);
-            }
+            var userId = localStorage.getItem('userUid')
 
             // Set the payment and order method values from localStorage if they exist
+            if (userId) {
+                document.getElementById('user_id').value = userId;
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: "Mohon refresh page",
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end',
+                    timerProgressBar: true,
+                    timer: 1300
+                }).then(() => {
+                    window.location.href = "{{ route('user.home') }}";
+                });
+                return;
+            }
             if (paymentMethod) {
                 document.getElementById('payment_method').value = paymentMethod;
             }

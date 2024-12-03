@@ -135,33 +135,49 @@
 
             $addBtn.on('click', function() {
                 const quantity = parseInt($quantityInput.val());
-                const index = cart.findIndex(item => item.menuId === menuId);
-                if (index > -1) {
-                    cart[index].quantity += quantity;
-                    cart[index].totalPrice += quantity * price;
-                } else {
-                    cart.push({
-                        id_menu: menuId,
-                        name: menuName,
-                        price: price,
-                        quantity: quantity,
-                        image: image,
-                        totalPrice: quantity * price
-                    });
-                }
-                updateCart();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil Menambahkan ke Keranjang',
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end',
-                    timerProgressBar: true,
-                    timer: 1300
-                }).then(() => {
-                    window.location.href = "{{ route('user.home') }}";
+                const data = {
+                    _token: "{{ csrf_token() }}",
+                    menu_id: menuId,
+                    quantity: quantity,
+                    user_id: localStorage.getItem('userUid'),
+                    order_method: localStorage.getItem('order_method')
+                };
+
+                $.ajax({
+                    url: "{{ route('user.order.add-item') }}",
+                    method: 'POST',
+                    data: data,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: response.message,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end',
+                            timerProgressBar: true,
+                            timer: 1300
+                        }).then(() => {
+                            window.location.href = "{{ route('user.home') }}";
+                        });
+                    },
+                    error: function(error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Menambahkan ke Keranjang',
+                            text: error.responseJSON.message,
+                            showConfirmButton: false,
+                            toast: true,
+                            position: 'top-end',
+                            timerProgressBar: true,
+                            timer: 1300
+                        });
+                    }
                 });
             });
+
         });
     </script>
 @endpush
@@ -171,7 +187,7 @@
         style="flex-flow: column; position: relative;">
         <!-- Logo di kiri atas -->
         <div class="p-0 m-0 mt-5 position-absolute" style="top: 0; left: 0; padding: 20px;">
-            <a href="{{ route("user.home") }}">
+            <a href="{{ route('user.home') }}">
                 <img src="{{ asset('logo_dapoer.svg') }}" alt="Logo" class="shadow-lg img-fluid"
                     style="max-width: 470px; height: auto;">
             </a>

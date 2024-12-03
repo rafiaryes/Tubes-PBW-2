@@ -10,56 +10,157 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    public function store(Request $request)
+
+    public function addItem(Request $request)
     {
+        $request->validate([
+            'menu_id' => 'required|exists:menu,id',
+            'quantity' => 'required|integer|min:1',
+        ]);
 
-        DB::beginTransaction(); // Start the transaction
+        $userId = $request->user_id;
+        $menuId = $request->menu_id;
+        $quantity = $request->quantity;
+        $order_method = $request->order_method;
+
         try {
-            // Get form data
-            $paymentMethod = $request['payment_method'];
-            $orderMethod = $request['order_method'];
-            $cart = $request['cart']; // It's already validated as JSON
-            $totalPrice = $request['total_price'];
+            DB::transaction(function () use ($userId, $menuId, $quantity, $order_method) {
 
-            // You can replace these with actual logic for order creation
-            $order = Order::create([
-                'payment_method' => $paymentMethod,
-                'order_method' => $orderMethod,
-                'cart' => $cart,
-                'total_price' => $totalPrice,
-                'status' => 'pending',
-            ]);
+                $order = Order::firstOrCreate(
+                    ['user_id' => $userId, 'status' => 'cart'],
+                    ['total_price' => 0, 'order_method' => $order_method]
+                );
 
-            // Example: Insert order items (assuming cart is an array of items)
-            foreach (json_decode($cart) as $item) {
-                $menu = Menu::find($item->id_menu);
-
-                if (!$menu) {
-                    continue;
+                // Ambil menu dan cek stok
+                $menu = Menu::findOrFail($menuId);
+                if ($menu->stok < $quantity) {
+                    throw new \Exception('Stok tidak mencukupi untuk item ini.');
                 }
-                OrderItem::create([
+
+                // Tambahkan atau perbarui item di keranjang
+                $orderItem = OrderItem::firstOrNew([
                     'order_id' => $order->id,
-                    'menu_id' => $item->id_menu,
-                    'quantity' => $item->quantity,
-                    'price' => $item->price,
+                    'menu_id' => $menuId,
                 ]);
+
+                if ($orderItem->exists) {
+                    $orderItem->quantity += $quantity;
+                } else {
+                    $orderItem->quantity = $quantity;
+                }
+
+                $orderItem->price = $orderItem->quantity * $menu->price;
+                $orderItem->save();
+
+                // Kurangi stok
+                $menu->stok -= $quantity;
+                $menu->save();
+
+                // Perbarui total harga order
+                $order->total_price = OrderItem::where('order_id', $order->id)->sum('price');
+                $order->save();
+            });
+
+            return response()->json(['message' => 'Item berhasil ditambahkan ke keranjang'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Gagal menambahkan item', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function makeOrder(Request $request)
+    {
+        DB::beginTransaction(); // Start the transaction
+
+        try {
+            $userId = $request->input('user_id');
+            $paymentMethod = $request->input('payment_method');
+            $orderMethod = $request->input('order_method');
+
+            $order = Order::where('user_id', $userId)
+                ->where('status', 'cart')
+                ->first();
+
+            if (!$order) {
+                return redirect()->route('user.home')->with('error', 'No active order found.');
             }
 
-            // Commit the transaction
+            $order->payment_method = $paymentMethod;
+            $order->order_method = $orderMethod;
+            $order->status = 'waiting_for_payment';
+            $order->save();
+
             DB::commit();
 
-            // Flash success message and redirect
             session()->flash('success', 'Berhasil membuat order!');
-            session()->flash('id_order', $order->id);
             return redirect()->route('user.home'); // Redirect to a success page
         } catch (\Exception $e) {
-            dd($e);
-            // Rollback the transaction in case of an error
+            // Rollback the transaction in case of error
             DB::rollback();
 
             // Flash error message and redirect back
             session()->flash('error', 'Gagal membuat order. Tolong coba lagi.');
             return back();
         }
+    }
+
+    public function getCart(Request $request)
+    {
+        // Get user_id from the request (you can pass it as a parameter or retrieve it from localStorage)
+        $userId = $request->user_id;
+
+        // Fetch the order with status 'cart' for the specific user
+        $cart = Order::with('items.menu')
+            ->where('user_id', $userId)
+            ->where('status', 'cart')
+            ->first();
+
+        // Return the order items or an empty array if no cart found
+        return response()->json(['cart' => $cart ? $cart->items : []]);
+    }
+
+
+    public function updateQuantity(Request $request, $orderItemId)
+    {
+        $userId = $request->user_id; // Ambil user_id dari request
+        $quantity = $request->quantity;
+
+        // Temukan item dalam order
+        $orderItem = OrderItem::where('id', $orderItemId)
+            ->whereHas('order', function ($query) use ($userId) {
+                $query->where('user_id', $userId)->where('status', 'cart');
+            })
+            ->first();
+
+        if ($orderItem) {
+            // Cek stok menu
+            $menu = $orderItem->menu;
+            if ($quantity > $menu->stok) {
+                return response()->json(['message' => 'Stok tidak mencukupi'], 400);
+            }
+
+            $orderItem->quantity = $quantity;
+            $orderItem->price = $menu->price * $quantity;
+            $orderItem->save();
+
+            $order = Order::find($orderItem->order_id);
+            $order->total_price = OrderItem::where('order_id', $order->id)->sum('price');
+            $order->save();
+
+            return response()->json(['item' => $orderItem, 'total_price' => $order->total_price]);
+        }
+
+        return response()->json(['message' => 'Item tidak ditemukan'], 404);
+    }
+
+    public function deleteItem($orderItemId)
+    {
+        $orderItem = OrderItem::find($orderItemId);
+
+        if ($orderItem) {
+            $orderItem->delete();
+            return response()->json(['message' => 'Item dihapus']);
+        }
+
+        return response()->json(['message' => 'Item tidak ditemukan'], 404);
     }
 }

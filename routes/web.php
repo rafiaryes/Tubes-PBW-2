@@ -26,7 +26,7 @@ Route::name('user.')->group(function () {
 
         if (request()->ajax()) {
             // Ambil data menu dan terapkan pagination
-            $menusQuery = Menu::select('id', 'nama', 'price', 'stok', 'image');
+            $menusQuery = Menu::select('id', 'nama', 'price', 'stok', 'image')->where("stok", '>', '0');
 
             // Jika ada pencarian
 
@@ -59,16 +59,21 @@ Route::name('user.')->group(function () {
         return view("home");
     })->name('home');
 
-    Route::get('/{id}/add-menu', function(Request $request) {
+    Route::get('/{id}/add-menu', function (Request $request) {
         $menu = Menu::find($request->id);
         return view("add_item", compact('menu'));
     })->name('add-menu');
 
-    Route::get('/cart', function(Request $request) {
+    Route::get('/cart', function (Request $request) {
         return view("cart");
     })->name('cart');
 
-    Route::post('/order', [OrderController::class, 'store'])->name('order.store');
+    Route::post('/order', [OrderController::class, 'makeOrder'])->name('order.store');
+    Route::post('/add-item', [OrderController::class, 'addItem'])->name('order.add-item');
+
+    Route::get('/get-cart', [OrderController::class, 'getCart'])->name("get-cart");
+    Route::delete('/cart/{itemId}', [OrderController::class, 'removeItem'])->name("remove-item");
+    Route::get('/cart/{itemId}/update', [OrderController::class, 'updateQuantity'])->name("update-cart");
 });
 
 Route::get('/dashboard', function () {

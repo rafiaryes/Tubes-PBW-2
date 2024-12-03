@@ -105,91 +105,134 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const userId = localStorage.getItem('userUid')
+
+            console.log(userId)
 
             function updateCartDisplay() {
                 $('#cart-container').empty(); // Clear the container
                 let totalPrice = 0;
 
-                if (cart.length === 0) {
-                    $('#cart-container').append(`
-                    <div class="py-4 text-center col-12">
-                        <p>No items in the cart.</p>
-                    </div>
-                `);
-                    $('#add-btn').prop('disabled', true); // Disable the button
-                    return;
+                // Ambil data order dari backend
+                $.ajax({
+                    url: '{{ route('user.get-cart') }}',
+                    method: 'GET',
+                    data: {
+                        user_id: userId
+                    },
+                    success: function(response) {
+                        const orderItems = response.cart;
+
+                        if (orderItems.length === 0) {
+                            $('#cart-container').append(`
+                        <div class="py-4 text-center col-12">
+                            <p>No items in the cart.</p>
+                        </div>
+                    `);
+                            $('#add-btn').prop('disabled', true); // Disable the button
+                            return;
+                        }
+
+                        let totalPrice = 0
+                        orderItems.forEach(item => {
+                            const image = "{{ asset('') }}" + "storage/" +
+                                `${item.menu.image}`;
+                            totalPrice += +item.price;
+
+                            // Append each cart item with unique ID based on order_item_id
+                            $('#cart-container').append(`
+                        <div class="flex-wrap mb-4 d-flex align-items-center justify-content-between" id="item-${item.id}" style="border-bottom: 1px solid #ddd;">
+                            <div class="col-2">
+                                <button class="btn btn-danger w-100" onclick="deleteItem(${item.id})">Hapus</button>
+                            </div>
+
+                            <div class="col-4 d-flex align-items-center">
+                                <img src="${image}" alt="Menu Image" class="shadow-lg img-fluid" style="max-width: 80px; height: auto;">
+                                <p class="fw-bold ms-3 text-truncate">${item.menu.nama || 'Nama Menu'}</p>
+                            </div>
+
+                            <div class="col-4 d-flex align-items-center justify-content-center">
+                                <button class="shadow-lg btn btn-dark fs-5 rounded-0" style="width: 3rem;background: #FEF8F8;color:black;" onclick="updateQuantity(${item.id}, -1)">-</button>
+                                <input type="text" class="mx-2 text-center shadow-lg form-control btn-dark fs-5 rounded-0" readonly style="width: 50px;background: #FEF8F8;color:black;" value="${item.quantity}">
+                                <button class="shadow-lg btn btn-dark fs-5 rounded-0" style="width: 3rem;background: #FEF8F8;color:black;" onclick="updateQuantity(${item.id}, 1)">+</button>
+                            </div>
+
+                            <div class="col-2 d-flex justify-content-end">
+                            <p class="text-muted fs-5 item-price" id="item-price-${item.id}">Rp. ${new Intl.NumberFormat('id-ID').format(item.price)}</p>
+                        </div>
+                        </div>
+                    `);
+                        });
+
+                        $('#add-btn').prop('disabled', false);
+                        console.log(totalPrice)
+                        $('#add-btn').on('click', function() {
+                            // Redirect to the payment method page
+                            window.location.href = "{{ route('user.payment_method') }}";
+                        });
+                        $('#total-price').text("Rp. " + new Intl.NumberFormat('id-ID').format(
+                            totalPrice));
+                    }
+                });
+            }
+
+            window.updateQuantity = function(orderItemId, change) {
+                let quantityInput = $(`#item-${orderItemId}`).find('input');
+                let priceElement = $(`#item-price-${orderItemId}`);
+                let quantity = parseInt(quantityInput.val()) + change;
+
+                if (quantity < 1) {
+                    return; // Jangan biarkan quantity kurang dari 1
                 }
 
-                cart.forEach((item, index) => {
-                    const image = "{{ asset('') }}" + "storage/" + `${item.image}`;
-                    totalPrice += item.totalPrice;
+                // Update quantity via AJAX
+                $.ajax({
+                    url: `/cart/${orderItemId}/update`,
+                    method: 'GET',
+                    data: {
+                        user_id: userId,
+                        quantity: quantity
+                    },
+                    success: function(response) {
+                        // Update harga dan quantity di tampilan
+                        quantityInput.val(quantity);
 
-                    $('#cart-container').append(`
-                    <div class="flex-wrap mb-4 d-flex align-items-center justify-content-between" style="border-bottom: 1px solid #ddd;">
-                        <!-- Delete Button -->
-                        <div class="col-2">
-                            <button class="btn btn-danger w-100" onclick="removeItem(${index})">Hapus</button>
-                        </div>
+                        // Update price for this item
+                        priceElement.text(
+                            `Rp. ${new Intl.NumberFormat('id-ID').format(response.item.price)}`);
 
-                        <!-- Image and Name -->
-                        <div class="col-4 d-flex align-items-center">
-                            <img src="${image}" alt="Menu Image" class="shadow-lg img-fluid" style="max-width: 80px; height: auto;">
-                            <p class="fw-bold ms-3 text-truncate">${item.name || 'Nama Menu'}</p>
-                        </div>
 
-                        <!-- Quantity Controls -->
-                        <div class="col-4 d-flex align-items-center justify-content-center">
-                            <button class="shadow-lg btn btn-dark fs-5 rounded-0" style="width: 3rem;background: #FEF8F8;color:black;" onclick="updateQuantity(${index}, -1)">-</button>
-                            <input type="text" class="mx-2 text-center shadow-lg form-control btn-dark fs-5 rounded-0"
-                                   readonly style="width: 50px;background: #FEF8F8;color:black;" value="${item.quantity}">
-                            <button class="shadow-lg btn btn-dark fs-5 rounded-0" style="width: 3rem;background: #FEF8F8;color:black;" onclick="updateQuantity(${index}, 1)">+</button>
-                        </div>
+                        // Update the total price display
+                        $('#total-price').text("Rp. " + new Intl.NumberFormat('id-ID').format(
+                            response.total_price));
 
-                        <!-- Total Price -->
-                        <div class="col-2 d-flex justify-content-end">
-                            <p class="text-muted fs-5">Rp. ${new Intl.NumberFormat('id-ID').format(item.totalPrice)}</p>
-                        </div>
-                    </div>
-                `);
+                    },
+                    error: function() {
+                        alert('Terjadi kesalahan saat memperbarui quantity.');
+                    }
                 });
-
-                $('#add-btn').prop('disabled', false);
-                // Update the total price display
-                $('#total-price').text("Rp. " + new Intl.NumberFormat('id-ID').format(totalPrice));
-            }
-
-            // Functions for removing and updating items
-            window.removeItem = function(index) {
-                cart.splice(index, 1);
-                localStorage.setItem('cart', JSON.stringify(cart));
-                updateCartDisplay();
             };
 
-            window.updateQuantity = function(index, change) {
-                let item = cart[index];
-                item.quantity = Math.max(1, item.quantity + change);
-                item.totalPrice = item.quantity * item.price;
-                localStorage.setItem('cart', JSON.stringify(cart));
-                updateCartDisplay();
+            window.deleteItem = function(orderItemId) {
+                // Hapus item via AJAX
+                const csrfToken = $('meta[name="csrf-token"]').attr('content');
+                $.ajax({
+                    url: `/cart/${orderItemId}`,
+                    method: 'DELETE',
+                    data: {
+                        _token: csrfToken, // Include CSRF token
+                    },
+                    success: function(response) {
+                        // Hapus elemen item dari tampilan
+                        $(`#item-${orderItemId}`).remove();
+                    },
+                    error: function() {
+                        alert('Terjadi kesalahan saat menghapus item.');
+                    }
+                });
             };
 
-            updateCartDisplay();
-        });
-
-        $(document).ready(function() {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-            if (cart.length === 0) {
-                // Disable the button if the cart is empty
-                $('#add-btn').prop('disabled', true);
-            } else {
-                // Set action on button click if cart has items
-                $('#add-btn').on('click', function() {
-                    window.location.href =
-                    "{{ route('user.payment_method') }}"; // Redirect to payment method route
-                });
-            }
+            updateCartDisplay(); // Inisialisasi tampilan cart
         });
     </script>
 @endpush
@@ -232,7 +275,7 @@
                 <!-- Tombol Tambah Pesanan -->
                 <div class="p-0 col-4">
                     <button id="add-btn" class="shadow-lg btn btn-dark w-100 fs-3 rounded-0"
-                            style="background: #2D9CAD; color: #FEF8F8">Selesaikan pesanan</button>
+                        style="background: #2D9CAD; color: #FEF8F8">Selesaikan pesanan</button>
                 </div>
             </div>
         </div>

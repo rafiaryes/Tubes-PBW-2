@@ -122,22 +122,39 @@
 
     @if (session()->has('id_order'))
         <script>
-            // Retrieve the order ID from session
+
             var orderId = @json(session('id_order'));
 
-            // Get orders from localStorage, if any, or initialize an empty array
             var orders = JSON.parse(localStorage.getItem('orders')) || [];
 
-            // Push the new order ID to the orders array
             orders.push(orderId);
 
-            // Store the updated orders array back to localStorage
             localStorage.setItem('orders', JSON.stringify(orders));
             localStorage.setItem('cart', JSON.stringify([]));
 
             console.log('Order ID added to localStorage:', orderId);
         </script>
     @endif
+
+    <script type="module">
+        import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@9.0.0/dist/esm-browser/index.js';
+
+        function storeUUID() {
+            const uuidKey = 'userUid';
+            console.log(localStorage.getItem(uuidKey))
+            if (!localStorage.getItem(uuidKey)) {
+                const uuid = uuidv4();
+                localStorage.setItem(uuidKey, uuid);
+                console.log('Generated UUID and stored:', uuid);
+            } else {
+                console.log('UUID already exists:', localStorage.getItem(uuidKey));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            storeUUID()
+        });
+    </script>
 
     <script>
         function previewImage(event) {
