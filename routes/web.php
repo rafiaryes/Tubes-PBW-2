@@ -72,7 +72,7 @@ Route::name('user.')->group(function () {
     Route::post('/add-item', [OrderController::class, 'addItem'])->name('order.add-item');
 
     Route::get('/get-cart', [OrderController::class, 'getCart'])->name("get-cart");
-    Route::delete('/cart/{itemId}', [OrderController::class, 'removeItem'])->name("remove-item");
+    Route::delete('/cart/{itemId}', [OrderController::class, 'deleteItem'])->name("remove-item");
     Route::get('/cart/{itemId}/update', [OrderController::class, 'updateQuantity'])->name("update-cart");
 });
 

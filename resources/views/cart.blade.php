@@ -216,18 +216,47 @@
             window.deleteItem = function(orderItemId) {
                 // Hapus item via AJAX
                 const csrfToken = $('meta[name="csrf-token"]').attr('content');
-                $.ajax({
-                    url: `/cart/${orderItemId}`,
-                    method: 'DELETE',
-                    data: {
-                        _token: csrfToken, // Include CSRF token
-                    },
-                    success: function(response) {
-                        // Hapus elemen item dari tampilan
-                        $(`#item-${orderItemId}`).remove();
-                    },
-                    error: function() {
-                        alert('Terjadi kesalahan saat menghapus item.');
+
+                Swal.fire({
+                    title: 'Konfirmasi',
+                    text: 'Apakah Anda yakin ingin menghapus?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, hapus!',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: `/cart/${orderItemId}`,
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                _token: csrfToken, // Include CSRF token
+                            },
+                            success: function(response) {
+                                const cartContainer = $('#cart-container');
+                                // Hapus elemen item dari tampilan
+                                $(`#item-${orderItemId}`).remove();
+
+                                if (cartContainer.children().length === 0) {
+                                    // Display the 'No items in the cart' message
+                                    cartContainer.html(
+                                        '<div class="py-4 text-center col-12"><p>No items in the cart.</p></div>'
+                                    );
+
+                                    $('#add-btn').prop('disabled', true);
+                                    $('#total-price').text("Rp. " + new Intl.NumberFormat(
+                                        'id-ID').format(
+                                        0));
+                                }
+                            },
+                            error: function() {
+                                alert('Terjadi kesalahan saat menghapus item.');
+                            }
+                        });
                     }
                 });
             };

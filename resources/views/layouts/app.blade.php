@@ -145,9 +145,7 @@
             if (!localStorage.getItem(uuidKey)) {
                 const uuid = uuidv4();
                 localStorage.setItem(uuidKey, uuid);
-                console.log('Generated UUID and stored:', uuid);
-            } else {
-                console.log('UUID already exists:', localStorage.getItem(uuidKey));
+                window.location.href = "{{ url("/") }}";
             }
         }
 
