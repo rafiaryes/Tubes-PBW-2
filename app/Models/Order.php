@@ -3,11 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\OrderItem;
 
 class Order extends Model
 {
     protected $table = "orders";
-    protected $fillable = [
-        "order_status","total_price","order_date","updated_at","delivery_type"
+    protected $guarded = [
+        ""
     ];
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
 }

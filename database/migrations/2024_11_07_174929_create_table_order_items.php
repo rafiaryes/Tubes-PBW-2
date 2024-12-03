@@ -16,9 +16,9 @@ return new class extends Migration
             $table->unsignedBigInteger("order_id");
             $table->unsignedBigInteger("menu_id");
             $table->integer("quantity");
-            $table->integer("price");
+            $table->decimal("price", 10, 2);
             $table->foreign("order_id")->references("id")->on("orders")->onDelete("CASCADE");
-            $table->foreign("menu_id")->references("id")->on("menus")->onDelete("CASCADE");
+            $table->foreign("menu_id")->references("id")->on("menu")->onDelete("CASCADE");
         });
     }
 

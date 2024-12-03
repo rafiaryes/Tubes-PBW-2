@@ -14,7 +14,7 @@ class MenuController extends Controller
 
     private $viewIndex = 'master_data.menu.index';
     private $viewCreate = 'master_data.menu.form';
-    private $viewEdit = 'master_data.menu.form';    
+    private $viewEdit = 'master_data.menu.form';
     private $routePrefix = 'admin.master_data.menu';
     /**
      * Display a listing of the resource.
@@ -24,10 +24,10 @@ class MenuController extends Controller
         if($request->ajax()) {
             $menus = Model::latest()->get();
             return DataTables::of($menus)
-            ->addIndexColumn()       
+            ->addIndexColumn()
             ->addColumn('formatted_price', function ($row) {
                 return 'Rp ' . number_format($row->price, 2, ",", ".");
-            }) 
+            })
             ->addColumn('foto_menu', function ($row) {
                 return '<img src="' . asset("storage/$row->image") . '" width="100" class="mt-2">';
             })
@@ -52,7 +52,7 @@ class MenuController extends Controller
             ->make(true);
         }
 
-        return view('admin.' . $this->viewIndex, [            
+        return view('admin.' . $this->viewIndex, [
             'routePrefix' => $this->routePrefix,
             'title' => 'Data Menu'
         ]);
@@ -85,6 +85,7 @@ class MenuController extends Controller
                 'deskripsi' => $request['deskripsi'],
                 'price' => $request['price'],
                 'stok' => $request['stok'],
+                'category' => $request['category'],
                 'status' => $request['stok'] > 0, // default aktif jika tidak disetel
                 'image' => $request->file('image')->store('menus'),
             ]);
@@ -106,7 +107,7 @@ class MenuController extends Controller
     public function show()
     {
 
-       
+
     }
 
     /**
@@ -138,7 +139,8 @@ class MenuController extends Controller
                 'deskripsi' => $request['deskripsi'],
                 'price' => $request['price'],
                 'stok' => $request['stok'],
-                'status' => $request['stok'] > 0,                
+                'category' => $request['category'],
+                'status' => $request['stok'] > 0,
             ];
 
             $model = Model::findOrFail($menu->id);
@@ -151,7 +153,7 @@ class MenuController extends Controller
             $model->update($menuUpdate);
             DB::commit();
             session()->flash('success', 'Menu Berhasil Diupdate');
-            return redirect()->route("admin.master_data.menu.index");            
+            return redirect()->route("admin.master_data.menu.index");
         } catch (\Exception $e) {
             DB::rollback();
             session()->flash('error', 'Menu Gagal Diupdate');
@@ -182,7 +184,7 @@ class MenuController extends Controller
     public function status(Model $menu)
     {
         DB::beginTransaction();
-        try {            
+        try {
             // Toggle the status (active to inactive, or vice versa)
             $menu->status = !$menu->status;
             $menu->save();

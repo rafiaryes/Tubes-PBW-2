@@ -4,8 +4,8 @@
 
         <div class="col-xl-10 col-lg-12 col-md-9">
 
-            <div class="card o-hidden border-0 shadow-lg">
-                <div class="card-body p-0">
+            <div class="border-0 shadow-lg card o-hidden">
+                <div class="p-0 card-body">
                     <!-- Nested Row within Card Body -->
                     <div class="row justify-content-center align-items-center">
                         <div class="col-lg-6">
@@ -14,7 +14,7 @@
                         <div class="col-lg-6 justify-content-center align-items-center">
                             <div class="p-5">
                                 <div class="text-center">
-                                    <h1 class="h4 text-gray-900 mb-4">Welcome Back!</h1>
+                                    <h1 class="mb-4 text-gray-900 h4">Welcome Back!</h1>
                                 </div>
                                 <form class="user" method="POST" action="{{ route('login') }}">
                                     @csrf
@@ -26,7 +26,7 @@
                                             autofocus>
 
                                         @error('email')
-                                            <span class="invalid-feedback" role="alert">
+                                            <span class="invalid-feedback d-block">
                                                 <strong>{{ $message }}</strong>
                                             </span>
                                         @enderror
@@ -37,7 +37,7 @@
                                             required autocomplete="current-password" placeholder="Enter Password...">
 
                                         @error('password')
-                                            <span class="invalid-feedback" role="alert">
+                                            <span class="invalid-feedback d-block">
                                                 <strong>{{ $message }}</strong>
                                             </span>
                                         @enderror
