@@ -35,7 +35,9 @@ Route::name('user.')->group(function () {
             }
 
             if ($request->input('search') && !empty($request->search)) {
-                $menusQuery->where('nama', 'like', '%' . $request->search . '%');
+                $menusQuery
+                ->where('nama', 'like', '%' . $request->search . '%')
+                ->orWhere('category', 'like', '%' . $request->search . '%');
             }
 
             // Mengambil data menu dengan pagination

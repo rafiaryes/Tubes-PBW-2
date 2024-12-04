@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class OrderController extends Controller
 {
@@ -21,60 +22,68 @@ class OrderController extends Controller
         $userId = $request->user_id;
         $menuId = $request->menu_id;
         $quantity = $request->quantity;
-        $order_method = $request->order_method;
+        $orderMethod = $request->input('order_method');
 
         try {
-            DB::transaction(function () use ($userId, $menuId, $quantity, $order_method) {
+            DB::beginTransaction();
 
-                $order = Order::firstOrCreate(
-                    ['user_id' => $userId, 'status' => 'cart'],
-                    ['total_price' => 0, 'order_method' => $order_method]
-                );
+            $order = Order::firstOrCreate(
+                ['user_id' => $userId, 'status' => 'cart'],
+                [
+                    'total_price' => 0,
+                    "order_method" => $orderMethod
+                ]
+            );
 
-                // Ambil menu dan cek stok
-                $menu = Menu::findOrFail($menuId);
-                if ($menu->stok < $quantity) {
-                    throw new \Exception('Stok tidak mencukupi untuk item ini.');
-                }
+            // Ambil menu dan cek stok
+            $menu = Menu::findOrFail($menuId);
+            if ($menu->stok < $quantity) {
+                throw new \Exception('Stok tidak mencukupi untuk item ini.');
+            }
 
-                // Tambahkan atau perbarui item di keranjang
-                $orderItem = OrderItem::firstOrNew([
-                    'order_id' => $order->id,
-                    'menu_id' => $menuId,
-                ]);
+            // Tambahkan atau perbarui item di keranjang
+            $orderItem = OrderItem::firstOrNew([
+                'order_id' => $order->id,
+                'menu_id' => $menuId,
+            ]);
 
-                if ($orderItem->exists) {
-                    $orderItem->quantity += $quantity;
-                } else {
-                    $orderItem->quantity = $quantity;
-                }
+            if ($orderItem->exists) {
+                $orderItem->quantity += $quantity;
+            } else {
+                $orderItem->quantity = $quantity;
+            }
 
-                $orderItem->price = $orderItem->quantity * $menu->price;
-                $orderItem->save();
+            $orderItem->price = $orderItem->quantity * $menu->price;
+            $orderItem->save();
 
-                // Kurangi stok
-                $menu->stok -= $quantity;
-                $menu->save();
+            // Kurangi stok
+            $menu->stok -= $quantity;
+            $menu->save();
 
-                // Perbarui total harga order
-                $order->total_price = OrderItem::where('order_id', $order->id)->sum('price');
-                $order->save();
-            });
+            // Perbarui total harga order
+            $order->total_price = OrderItem::where('order_id', $order->id)->sum('price');
+            $order->save();
 
+            DB::commit();
             return response()->json(['message' => 'Item berhasil ditambahkan ke keranjang'], 200);
         } catch (\Exception $e) {
+            DB::rollback();
             return response()->json(['message' => 'Gagal menambahkan item', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function makeOrder(Request $request)
     {
+
         DB::beginTransaction(); // Start the transaction
 
         try {
             $userId = $request->input('user_id');
             $paymentMethod = $request->input('payment_method');
             $orderMethod = $request->input('order_method');
+            $name = $request->name;
+            $email = $request->email;
+            $noPhone = $request->nophone;
 
             $order = Order::where('user_id', $userId)
                 ->where('status', 'cart')
@@ -84,8 +93,11 @@ class OrderController extends Controller
                 return redirect()->route('user.home')->with('error', 'No active order found.');
             }
 
+            $order->name = $name;
+            $order->email = $email;
             $order->payment_method = $paymentMethod;
             $order->order_method = $orderMethod;
+            $order->nophone = $noPhone;
             $order->status = 'waiting_for_payment';
             $order->save();
 

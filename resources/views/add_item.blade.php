@@ -193,21 +193,21 @@
             </a>
         </div>
 
-        <div class="px-5 pt-5 shadow-lg card" style="max-width: 500px; width: 100%; background: #FEF8F8;">
+        <div class="px-5 pt-5 shadow-lg card" style="max-width: 350px; width: 100%; background: #FEF8F8;">
             <!-- Placeholder Gambar -->
             <div class="mb-4 text-center">
-                <div class="rounded" style="width: 100%; height: 300px; background: #FEF8F8;">
+                <div class="rounded" style="width: 100%; height: 200px; background: #FEF8F8;">
                     <img src="{{ asset("storage/$menu->image") }}" class="img-fluid" alt="">
                 </div>
                 <h3 class="mt-3 fw-bold">{{ $menu->nama }}</h3>
-                <p id="price-display" class="text-muted fs-4">Rp. {{ $menu->price }}</p>
+                <p id="price-display" class="text-muted fs-5">Rp. {{ $menu->price }}</p>
             </div>
         </div>
 
         <!-- Kontrol Jumlah -->
-        <div class="row w-100 align-items-center justify-content-center" style="max-width: 59rem">
+        <div class=" row w-100 align-items-center justify-content-center" style="padding-left: 30%; padding-right: 30%">
             <!-- Tombol Minus -->
-            <div class="p-0 col-1 d-flex justify-content-end">
+            <div class="p-0 col-2 d-flex justify-content-end">
                 <button type="" id="minus-btn" class="shadow-lg btn btn-dark fs-3 rounded-0"
                     style="background: #FEF8F8; color: black; width: 4rem">-</button>
             </div>
@@ -220,14 +220,14 @@
             </div>
 
             <!-- Tombol Plus -->
-            <div class="p-0 col-1">
+            <div class="p-0 col-2">
                 <button id="plus-btn" class="shadow-lg btn btn-dark fs-3 rounded-0"
                     style="background: #FEF8F8; color: black;width: 4rem">+</button>
             </div>
         </div>
 
         <!-- Tombol Aksi -->
-        <div class="row w-100 align-items-center justify-content-center" style="max-width: 64rem">
+        <div class="row w-100 align-items-center justify-content-center" style="max-width: 46rem">
             <!-- Tombol Batal -->
             <div class="p-0 col-4">
                 <a href="{{ route('user.home') }}">
