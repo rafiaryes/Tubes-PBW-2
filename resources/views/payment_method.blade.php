@@ -131,31 +131,76 @@
             </a>
         </div>
 
-        <h1 style="font-weight: bold; font-family:Arial, Helvetica; color: black">Pilih Pembayaran</h1>
+        <h1 style="font-weight: bold; font-family:Arial, Helvetica; color: black">Form Pemesanan</h1>
 
         <form id="orderForm" action="{{ route('user.order.store') }}" method="POST">
             @csrf
-            <input type="hidden" name="payment_method" id="payment_method">
-            <input type="hidden" name="order_method" id="order_method">
             <input type="hidden" name="user_id" id="user_id">
+
+            <div class="form-group">
+                <label for="name">Nama</label>
+                <input name="name" class="form-control @error('name') is-invalid @enderror"
+                    required>{{ old('name') }}</input>
+                @error('name')
+                    <span class="invalid-feedback d-block" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input name="email" class="form-control @error('email') is-invalid @enderror"
+                    required>{{ old('email') }}</input>
+                @error('email')
+                    <span class="invalid-feedback d-block" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+
+            <div class="form-group">
+                <label for="nophone">No Handphone</label>
+                <input name="nophone" class="form-control @error('nophone') is-invalid @enderror"
+                    required>{{ old('nophone') }}</input>
+                @error('nophone')
+                    <span class="invalid-feedback d-block" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+
+            <label for="order_method">Metode pemesanan</label>
+            <div class="form-group">
+                <input type="radio" id="html" value="dine_in" name="order_method">
+                <label for="html">Makan Disini</label><br>
+                <input type="radio" id="html" value="takeaway" name="order_method">
+                <label for="html">Bawa Pulang</label><br>
+                @error('order_method')
+                    <span class="invalid-feedback d-block" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+
+            <label for="payment_method">Metode Pembayaran</label>
+            <div class="form-group">
+                <input type="radio" id="html" value="pay_in_casheer" name="payment_method" checked>
+                <label for="html">Bayar di kasir</label><br>
+                <input type="radio" id="html" value="pay_here" name="payment_method">
+                <label for="html">Bayar di sini</label><br>
+                @error('payment_method')
+                    <span class="invalid-feedback d-block" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
         </form>
 
-        <button onclick="setPaymentAndSubmit('pay_here')" class="btn-order">
-            <div class="text-center shadow shadow-lg card" style="width: 350px; height: 300px; transform: scale(1.1);">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                    <h5 class="card-title fs-4 fw-bold" style="font-size: 1.8rem;">Pay Here</h5>
-                    <img src="{{ asset('pay_here_icon.svg') }}" class="card-img-top" alt="Pay Here"
-                        style="max-width: 100%; max-height: 200px; object-fit: contain;">
-                </div>
-            </div>
+        <button class="rounded btn btn-dark fs-3 btn-order" onclick="submitOrderForm()"
+            style="background: #2D9CAD; color: #FEF8F8; height: 60px; width: 25%">
+            Bayar
         </button>
-
-        <h2 style="font-family:Arial, Helvetica; color: gray;margin-top: 1%">Atau</h1>
-
-            <button class="rounded btn btn-dark fs-3 btn-order" onclick="setPaymentAndSubmit('pay_in_casheer')"
-                style="background: #2D9CAD; color: #FEF8F8; height: 60px;width: 40%">
-                Bayar di Kasir
-            </button>
     </div>
     <script>
         window.onload = function() {
@@ -180,25 +225,19 @@
                 });
                 return;
             }
-            if (paymentMethod) {
-                document.getElementById('payment_method').value = paymentMethod;
-            }
             if (orderMethod) {
-                document.getElementById('order_method').value = orderMethod;
+                document.querySelector(`input[name="order_method"][value="${orderMethod}"]`).checked = true;
+            }
+
+            // Select the corresponding radio button for payment method
+            if (paymentMethod) {
+                document.querySelector(`input[name="payment_method"][value="${paymentMethod}"]`).checked = true;
             }
         };
 
-        function setPaymentAndSubmit(method) {
-            // Store the payment method in localStorage
-
-            document.getElementById('payment_method').value = method;
-
+        function submitOrderForm() {
             // Submit the form
             document.getElementById('orderForm').submit();
-        }
-        // Function to store order method in localStorage
-        function setPaymentMethod(method) {
-            localStorage.setItem('payment', method);
         }
     </script>
 </x-user-layout>

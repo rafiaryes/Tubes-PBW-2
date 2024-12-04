@@ -28,7 +28,7 @@
         <div class="text-center w-100">
             <!-- Logo at the top -->
             <img src="{{ asset('logo_dapoer.svg') }}" alt="Logo" class="mb-4 shadow-lg img-fluid"
-                style="max-width: 1200px; width: 100%; height: auto;">
+                style="max-width: 700px; width: 100%; height: auto;">
         </div>
         <a href="{{ route("user.order_method") }}" class="d-inline-block">
             <button class="shadow-lg btn btn-light btn-custom-lg" style="font-weight: bold; border: 2px solid #FEF8F8;">
