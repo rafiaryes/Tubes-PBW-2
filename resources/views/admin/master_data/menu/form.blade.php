@@ -39,6 +39,21 @@
                 @enderror
             </div>
             <div class="form-group">
+                <label for="category">Category</label>
+                <textarea name="category" class="form-control @error('category') is-invalid @enderror" required>{{ old('category', $model->category) }}</textarea>
+                <select name="category" id="category" required>
+                    <option selected>Pilih category</option>
+                    <option value="makanan">Makanan</option>
+                    <option value="minuman">Minuman</option>
+                    <option value="cemillan">Cemilan</option>
+                </select>
+                @error('category')
+                <span class="invalid-feedback" role="alert">
+                    <strong>{{ $message }}</strong>
+                </span>
+                @enderror
+            </div>
+            <div class="form-group">
                 <label for="price">Harga</label>
                 <input type="number" name="price" class="form-control @error('price') is-invalid @enderror"
                     value="{{ old('price', default: $model->price) }}" required>
@@ -73,7 +88,7 @@
                 </span>
                 @enderror
             </div>
-            <button type="submit" class="btn btn-primary mb-2">{{ $button }}</button>
+            <button type="submit" class="mb-2 btn btn-primary">{{ $button }}</button>
         </form>
     </div>
 </x-app-layout>
