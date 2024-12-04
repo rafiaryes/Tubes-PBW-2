@@ -10,7 +10,6 @@ use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
-
     public function run(): void
     {
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
@@ -45,7 +44,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
-            $user = User::firstOrNew($user);
+            $user = User::updateOrCreate($user);
             $user->assignRole($adminRole);
         }
     }
