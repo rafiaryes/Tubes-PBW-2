@@ -15,8 +15,7 @@ class MenuController extends Controller
     private $viewIndex = 'master_data.menu.index';
     private $viewCreate = 'master_data.menu.form';
     private $viewEdit = 'master_data.menu.form';
-    // private $viewShow = 'menu_show';
-    private $routePrefix = 'admin.menu';
+    private $routePrefix = 'admin.master_data.menu';
     /**
      * Display a listing of the resource.
      */
@@ -25,7 +24,10 @@ class MenuController extends Controller
         if($request->ajax()) {
             $menus = Model::latest()->get();
             return DataTables::of($menus)
-            ->addIndexColumn()        
+            ->addIndexColumn()
+            ->addColumn('formatted_price', function ($row) {
+                return 'Rp ' . number_format($row->price, 2, ",", ".");
+            })
             ->addColumn('foto_menu', function ($row) {
                 return '<img src="' . asset("storage/$row->image") . '" width="100" class="mt-2">';
             })
@@ -50,7 +52,7 @@ class MenuController extends Controller
             ->make(true);
         }
 
-        return view('admin.' . $this->viewIndex, [            
+        return view('admin.' . $this->viewIndex, [
             'routePrefix' => $this->routePrefix,
             'title' => 'Data Menu'
         ]);
@@ -83,13 +85,14 @@ class MenuController extends Controller
                 'deskripsi' => $request['deskripsi'],
                 'price' => $request['price'],
                 'stok' => $request['stok'],
+                'category' => $request['category'],
                 'status' => $request['stok'] > 0, // default aktif jika tidak disetel
                 'image' => $request->file('image')->store('menus'),
             ]);
 
             DB::commit();
             session()->flash('success', 'Menu Berhasil Ditambahkan');
-            return redirect()->route("admin.menu.index");
+            return redirect()->route("admin.master_data.menu.index");
         } catch (\Exception $e) {
             DB::rollback();
             session()->flash('error', 'Menu Gagal Ditambahkan');
@@ -104,7 +107,7 @@ class MenuController extends Controller
     public function show()
     {
 
-       
+
     }
 
     /**
@@ -135,7 +138,9 @@ class MenuController extends Controller
                 'nama' => $request['nama'],
                 'deskripsi' => $request['deskripsi'],
                 'price' => $request['price'],
-                'stok' => $request['stok'],                
+                'stok' => $request['stok'],
+                'category' => $request['category'],
+                'status' => $request['stok'] > 0,
             ];
 
             $model = Model::findOrFail($menu->id);
@@ -148,7 +153,7 @@ class MenuController extends Controller
             $model->update($menuUpdate);
             DB::commit();
             session()->flash('success', 'Menu Berhasil Diupdate');
-            return redirect()->route("admin.menu.index");
+            return redirect()->route("admin.master_data.menu.index");
         } catch (\Exception $e) {
             DB::rollback();
             session()->flash('error', 'Menu Gagal Diupdate');
@@ -167,7 +172,7 @@ class MenuController extends Controller
             Storage::delete($menu->image);
             DB::commit();
             session()->flash('success', 'Berhasil Menghapus Menu');
-            return redirect()->back();
+            return redirect()->route("admin.master_data.menu.index");
         } catch (\Exception $e) {
             DB::rollback();
             session()->flash('error2', 'Gagal Menghapus Menu');
@@ -177,21 +182,21 @@ class MenuController extends Controller
 
 
     public function status(Model $menu)
-{
-    DB::beginTransaction();
-    try {
-        // Toggle the status (active to inactive, or vice versa)
-        $menu->status = !$menu->status;
-        $menu->save();
+    {
+        DB::beginTransaction();
+        try {
+            // Toggle the status (active to inactive, or vice versa)
+            $menu->status = !$menu->status;
+            $menu->save();
 
-        DB::commit();
-        session()->flash('success', 'Status Berhasil Diperbarui');
-        return back();
-    } catch (\Exception $e) {
-        DB::rollback();
-        session()->flash('error', 'Gagal Memperbarui Status');
-        return back();
+            DB::commit();
+            session()->flash('success', 'Status Berhasil Diperbarui');
+            return back();
+        } catch (\Exception $e) {
+            DB::rollback();
+            session()->flash('error', 'Gagal Memperbarui Status');
+            return back();
+        }
     }
-}
 
 }

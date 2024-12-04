@@ -1,6 +1,19 @@
 <x-app-layout>
     <div class="container-fluid">
-        <h1 class="h3 mb-4 text-gray-800">{{ $title }}</h1>
+        <!-- Display Breadcrumbs -->
+        <div aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                @foreach (Breadcrumbs::generate() as $breadcrumb)
+                    <li class="breadcrumb-item">
+                        @if ($breadcrumb->url)
+                            <a href="{{ $breadcrumb->url }}">{{ $breadcrumb->title }}</a>
+                        @else
+                            {{ $breadcrumb->title }}
+                        @endif
+                    </li>
+                @endforeach
+            </ol>
+        </div>
         <div class="card shadow mb-4">
             <div class="card-header py-3 py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 font-weight-bold text-primary">Master Data Menu</h6>
@@ -37,7 +50,7 @@
                         { data: 'DT_RowIndex', name: 'DT_RowIndex'},
                         { data: 'nama', name: 'nama' },
                         { data: 'deskripsi', name: 'deskripsi' },
-                        { data: 'price', name: 'price' },
+                        { data: 'formatted_price', name: 'formatted_price' },
                         { data: 'stok', name: 'stok' },                        
                         { data: 'foto_menu', name: 'foto_menu', orderable: false, searchable: false },
                         { data: 'action', name: 'action', orderable: false, searchable: false }

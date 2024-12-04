@@ -1,34 +1,39 @@
 @push('css')
-<style>
-    /* Full height for centering the content */
-    .full-height {
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-</style>
+    <style>
+        /* Full height for centering the content */
+        .full-height {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 1660px;
+        }
+
+        img {
+            object-fit: contain;
+            height: auto;
+        }
+
+        .btn-custom-lg {
+            font-size: 1.25rem;
+            /* Ukuran teks lebih besar */
+            padding: 1rem 2rem;
+            /* Padding lebih besar untuk tombol */
+        }
+    </style>
 @endpush
 
-<x-auth-layout>
-    <div class="d-flex justify-content-center align-items-center full-height">
-        <div class="text-center">
+<x-user-layout>
+    <div class="gap-4 d-flex flex-column justify-content-center align-items-center full-height">
+        <div class="text-center w-100">
             <!-- Logo at the top -->
-            <img src="{{ asset('Logo_KantinPintar.jpg') }}" alt="Logo" class="mb-4" style="max-width: 200px;">
-
-            <!-- Conditional content based on login status -->
-            @if(auth()->check())
-                <!-- If the user is logged in, show the "Back to Dashboard" button -->
-                <div>
-                    <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg mb-2">Back to Dashboard</a>
-                </div>
-            @else
-                <!-- If the user is not logged in, show the login and register buttons -->
-                <div class="d-flex gao-4">
-                    <a href="{{ route('login') }}" class="btn btn-primary btn-lg">Login</a>
-                    <a href="{{ route('register') }}" class="btn btn-secondary btn-lg">Register</a>
-                </div>
-            @endif
+            <img src="{{ asset('logo_dapoer.svg') }}" alt="Logo" class="mb-4 shadow-lg img-fluid"
+                style="max-width: 1200px; width: 100%; height: auto;">
         </div>
+        <a href="{{ route("user.order_method") }}" class="d-inline-block">
+            <button class="shadow-lg btn btn-light btn-custom-lg" style="font-weight: bold; border: 2px solid #FEF8F8;">
+                Mulai Pesanan
+            </button>
+        </a>
     </div>
-</x-auth-layout>
+</x-user-layout>
