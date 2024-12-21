@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Services\MidtransService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
@@ -127,7 +128,6 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             // Rollback the transaction in case of error
             DB::rollback();
-            dd($e);
 
             // Flash error message and redirect back
             session()->flash('error', 'Gagal membuat order. Tolong coba lagi.');
@@ -271,7 +271,7 @@ class OrderController extends Controller
     public function historyOrderList(Request $request)
     {
         if ($request->ajax()) {
-            $orders = Order::when(auth()->user()->role !== 'admin', function ($query) {
+            $orders = Order::when(Auth::user()->hasRole('kasir'), function ($query) {
                 $query->where('kasir_id', auth()->user()->id); // Apply filter only if the user is not an admin
             })
                 ->latest()
