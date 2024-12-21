@@ -199,7 +199,7 @@ class OrderController extends Controller
     public function orderList(Request $request)
     {
         if ($request->ajax()) {
-            $orders = Order::whereIn('status', ['waiting_for_payment'])
+            $orders = Order::whereIn('status', ['waiting_for_payment', 'pick_up'])
                 ->whereNull('kasir_id')
                 ->latest()
                 ->get();
