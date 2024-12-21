@@ -2,12 +2,15 @@
 
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Models\Menu;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\FacadesDB;
 use Illuminate\Support\Facades\Route;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -36,8 +39,8 @@ Route::name('user.')->group(function () {
 
             if ($request->input('search') && !empty($request->search)) {
                 $menusQuery
-                ->where('nama', 'like', '%' . $request->search . '%')
-                ->orWhere('category', 'like', '%' . $request->search . '%');
+                    ->where('nama', 'like', '%' . $request->search . '%')
+                    ->orWhere('category', 'like', '%' . $request->search . '%');
             }
 
             // Mengambil data menu dengan pagination
@@ -71,16 +74,115 @@ Route::name('user.')->group(function () {
     })->name('cart');
 
     Route::post('/order', [OrderController::class, 'makeOrder'])->name('order.store');
+    Route::post('/payment', [OrderController::class, 'processPayment'])->name('payment.process');
+    Route::post('/midtrans/notification', [OrderController::class, 'handleMidtransNotification'])->name('payment.notification');
+
     Route::post('/add-item', [OrderController::class, 'addItem'])->name('order.add-item');
 
     Route::get('/get-cart', [OrderController::class, 'getCart'])->name("get-cart");
     Route::delete('/cart/{itemId}', [OrderController::class, 'deleteItem'])->name("remove-item");
     Route::get('/cart/{itemId}/update', [OrderController::class, 'updateQuantity'])->name("update-cart");
+
+    Route::get('/payment/midtrans/{order_id}', [PaymentController::class, 'midtrans'])->name('payment.midtrans');
+    Route::post('/payment/midtrans-callback', [PaymentController::class, 'midtransCallback']);
 });
 
 Route::get('/dashboard', function () {
-    return view('admin.dashboard');
+    // Check if the current user is an admin
+    $isAdmin = auth()->user()->role == 'admin';
+
+    // Pendapatan Bulanan
+    $monthlyEarnings = DB::table('orders')
+        ->join('order_items', 'orders.id', '=', 'order_items.order_id')
+        ->whereMonth('orders.created_at', now()->month)
+        ->where('orders.status', 'finished')
+        ->when(!$isAdmin, function ($query) {
+            $query->where('orders.kasir_id', auth()->user()->id); // Filter berdasarkan kasir_id hanya jika bukan admin
+        })
+        ->sum(DB::raw('order_items.price * order_items.quantity'));
+
+    // Pendapatan Tahunan
+    $annualEarnings = DB::table('orders')
+        ->join('order_items', 'orders.id', '=', 'order_items.order_id')
+        ->whereYear('orders.created_at', now()->year)
+        ->where('orders.status', 'finished')
+        ->when(!$isAdmin, function ($query) {
+            $query->where('orders.kasir_id', auth()->user()->id); // Filter berdasarkan kasir_id hanya jika bukan admin
+        })
+        ->sum(DB::raw('order_items.price * order_items.quantity'));
+
+    // Total Pesanan
+    $totalOrders = DB::table('orders')
+        ->where('status', 'finished')
+        ->when(!$isAdmin, function ($query) {
+            $query->where('kasir_id', auth()->user()->id); // Filter berdasarkan kasir_id hanya jika bukan admin
+        })
+        ->count();
+
+    // Menu Terbanyak Terjual
+    $topMenu = DB::table('order_items')
+        ->join('menu', 'order_items.menu_id', '=', 'menu.id')
+        ->join('orders', 'order_items.order_id', '=', 'orders.id')
+        ->where('orders.status', 'finished')
+        ->when(!$isAdmin, function ($query) {
+            $query->where('orders.kasir_id', auth()->user()->id); // Filter berdasarkan kasir_id hanya jika bukan admin
+        })
+        ->select('menu.nama', DB::raw('SUM(order_items.quantity) as total'))
+        ->groupBy('menu.nama')
+        ->orderByDesc('total')
+        ->first();
+
+    // Get total earnings for each month of the current year
+    $monthlyChartEarnings = DB::table('orders')
+        ->join('order_items', 'orders.id', '=', 'order_items.order_id')
+        ->selectRaw('MONTH(orders.created_at) as month, SUM(order_items.price * order_items.quantity) as total_earnings')
+        ->whereYear('orders.created_at', now()->year)
+        ->where('orders.status', 'finished') // Assuming 'finished' means completed orders
+        ->when(!$isAdmin, function ($query) {
+            $query->where('orders.kasir_id', auth()->user()->id); // Filter berdasarkan kasir_id hanya jika bukan admin
+        })
+        ->groupBy(DB::raw('MONTH(orders.created_at)'))
+        ->orderBy(DB::raw('MONTH(orders.created_at)'))
+        ->get();
+
+    // Prepare data for the chart (total earnings per month)
+    $earningsData = [];
+    foreach ($monthlyChartEarnings as $earnings) {
+        $earningsData[] = (float) $earnings->total_earnings;
+    }
+
+    // Prepare labels (months) for the chart
+    $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Total Pesanan per Bulan per Tahun
+    $monthlyChartOrders = DB::table('orders')
+        ->select(DB::raw('MONTH(orders.created_at) as month'), DB::raw('COUNT(*) as total'))
+        ->whereYear('orders.created_at', now()->year)
+        ->where('orders.status', 'finished')
+        ->when(!$isAdmin, function ($query) {
+            $query->where('orders.kasir_id', auth()->user()->id); // Filter berdasarkan kasir_id hanya jika bukan admin
+        })
+        ->groupBy(DB::raw('MONTH(orders.created_at)'))
+        ->orderBy(DB::raw('MONTH(orders.created_at)'))
+        ->get();
+
+    $paymentMethodsData = DB::table('orders')
+        ->select('payment_method', DB::raw('COUNT(*) as total_orders'))
+        ->groupBy('payment_method')
+        ->get();
+
+    // Prepare data to pass to the view
+    $paymentMethods = [];
+    $orderCounts = [];
+    foreach ($paymentMethodsData as $data) {
+        $paymentMethods[] = $data->payment_method; // Payment method names
+        $orderCounts[] = $data->total_orders; // Order counts for each payment method
+    }
+
+    // Return data ke view
+    return view('admin.dashboard', compact('monthlyEarnings', 'annualEarnings', 'totalOrders', 'topMenu', 'earningsData', 'months', 'paymentMethods', 'orderCounts'));
 })->middleware(['auth', 'verified'])->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -98,6 +200,13 @@ Route::middleware('auth')->group(function () {
             Route::resource('user', UserController::class);
             Route::post('user/{user}/status', [UserController::class, 'status'])->name('user.status');
         });
+    });
+
+    Route::middleware(['role:admin|kasir'])->group(function () {
+        Route::get('order', [OrderController::class, 'orderList'])->name('order-list'); // All orders not finished and kasir_id null
+        Route::get('history-order', [OrderController::class, 'historyOrderList'])->name('history-order-list'); // All orders that kasir has taken
+        Route::get('detail-order/{id}', [OrderController::class, 'detailOrder'])->name('detail-order');
+        Route::post('update-status-order/{id}', [OrderController::class, 'updateStatusOrder'])->name('update-status-order');
     });
 });
 

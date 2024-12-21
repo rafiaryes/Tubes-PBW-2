@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_items', function (Blueprint $table) {
-            $table->bigIncrements("id")->primary(true);
-            $table->unsignedBigInteger("menu_id");
-            $table->integer("quantity");
-            $table->decimal("price", 10, 2);
+        Schema::create('payments', function (Blueprint $table) {
+            $table->id();
+            $table->string('snap_token')->nullable();
+            $table->string('status', length: 32)->default('pending');
+            $table->dateTime('expired_at')->nullable();
+            $table->dateTime('paid_at')->nullable();
             $table->foreignUuid("order_id")->references("id")->on("orders")->onDelete("CASCADE");
-            $table->foreign("menu_id")->references("id")->on("menu")->onDelete("CASCADE");
-        });
+            $table->timestamps();
+          });
     }
 
     /**
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('table_order_items');
+        Schema::dropIfExists('payments');
     }
 };
