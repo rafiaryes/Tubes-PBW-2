@@ -9,6 +9,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Models\Menu;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\FacadesDB;
 use Illuminate\Support\Facades\Route;
@@ -89,7 +90,7 @@ Route::name('user.')->group(function () {
 
 Route::get('/dashboard', function () {
     // Check if the current user is an admin
-    $isAdmin = auth()->user()->role == 'admin';
+    $isAdmin = Auth::user()->hasRole('admin');
 
     // Pendapatan Bulanan
     $monthlyEarnings = DB::table('orders')
