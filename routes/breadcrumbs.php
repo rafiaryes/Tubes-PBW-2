@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
@@ -72,4 +72,20 @@ Breadcrumbs::for('admin.master_data.user.create', function (BreadcrumbTrail $tra
 Breadcrumbs::for('admin.master_data.user.edit', function (BreadcrumbTrail $trail, $user) {
     $trail->parent('admin.master_data.user.index');
     $trail->push('Edit User', route('admin.master_data.user.edit', $user));
+});
+
+Breadcrumbs::for('order-list', function (BreadcrumbTrail $trail) {
+    $trail->parent('admin.dashboard'); // Or any parent breadcrumb you have, like admin.dashboard
+    $trail->push('Order List', route('order-list'));
+});
+
+// History Order List (Admin/Kasir)
+Breadcrumbs::for('history-order-list', function (BreadcrumbTrail $trail) {
+    $trail->parent('admin.dashboard'); // Again, use a relevant parent breadcrumb
+    $trail->push('History Order List', route('history-order-list'));
+});
+
+Breadcrumbs::for('detail-order', function (BreadcrumbTrail $trail, $id) {
+    $trail->parent('admin.dashboard'); // Again, use a relevant parent breadcrumb
+    $trail->push('Order Detail ' . $id, route('detail-order', $id));
 });

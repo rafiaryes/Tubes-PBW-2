@@ -27,6 +27,7 @@
         Managemen
     </div>
     <!-- Nav Item - Master Data Collapse Menu -->
+    @hasrole("admin")
     <li class="nav-item {{ request()->is('admin/master_data*') ? 'active' : '' }}">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseMasterData"
             aria-expanded="true" aria-controls="collapseMasterData">
@@ -45,6 +46,22 @@
             </div>
         </div>
     </li>
+    @endhasrole
+    @hasrole("kasir")
+    <li class="nav-item {{ request()->is('order*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('order-list') }}" aria-expanded="true">
+            <i class="fas fa-fw fa-database"></i>
+            <span>Order Data</span>
+        </a>
+    </li>
+    <li class="nav-item {{ request()->is('history-order*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('history-order-list') }}" aria-expanded="true">
+            <i class="fas fa-fw fa-database"></i>
+            <span>History Order Data</span>
+        </a>
+    </li>
+
+    @endhasrole
 
      <!-- Divider -->
      <hr class="sidebar-divider d-none d-md-block">
