@@ -40,8 +40,7 @@
             </div>
             <div class="form-group">
                 <label for="category">Category</label>
-                <textarea name="category" class="form-control @error('category') is-invalid @enderror" required>{{ old('category', $model->category) }}</textarea>
-                <select name="category" id="category" required>
+                <select name="category" id="category" class="form-control @error('category') is-invalid @enderror" required>{{ old('category', $model->category) }} required>
                     <option selected>Pilih category</option>
                     <option value="makanan">Makanan</option>
                     <option value="minuman">Minuman</option>
@@ -91,4 +90,27 @@
             <button type="submit" class="mb-2 btn btn-primary">{{ $button }}</button>
         </form>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const priceInput = document.querySelector('input[name="price"]');
+
+            if (priceInput) {
+                priceInput.addEventListener('input', function(e) {
+                    const value = e.target.value.replace(/\D/g, '');
+                    e.target.value = formatNumber(value);
+                });
+
+                const form = priceInput.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function() {
+                        priceInput.value = priceInput.value.replace(/\./g, '');
+                    });
+                }
+            }
+
+            function formatNumber(number) {
+                return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+        });
+    </script>
 </x-app-layout>

@@ -24,7 +24,7 @@
     @stack('css')
 </head>
 
-<body class="bg-gradient-primary">
+<body class="bg-gradient-info">
 
     <div class="container">       
         {{ $slot }}

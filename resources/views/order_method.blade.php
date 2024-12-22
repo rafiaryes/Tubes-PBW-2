@@ -54,8 +54,8 @@
     <div class="full-height">
         <!-- Logo di kiri (1 bagian) -->
         <div class="logo-container">
-            <img src="{{ asset('logo_dapoer.svg') }}" alt="Logo" class="shadow-lg img-fluid"
-                style="max-width: 470px; height: auto;">
+            <img src="{{ asset('Logo_Dapoer.jpg') }}" alt="Logo" class="shadow-lg img-fluid"
+                style="max-width: 350px; height: auto;">
         </div>
 
         <!-- Kartu di kanan (4 bagian) -->

@@ -200,7 +200,7 @@
                     <img src="{{ asset("storage/$menu->image") }}" class="img-fluid" alt="">
                 </div>
                 <h3 class="mt-3 fw-bold">{{ $menu->nama }}</h3>
-                <p id="price-display" class="text-muted fs-5">Rp. {{ $menu->price }}</p>
+                <p id="price-display" class="text-muted fs-5">Rp  {{ number_format($menu->price, 0, ',', '.') }}</p>
             </div>
         </div>
 

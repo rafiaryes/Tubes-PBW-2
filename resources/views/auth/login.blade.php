@@ -9,7 +9,7 @@
                     <!-- Nested Row within Card Body -->
                     <div class="row justify-content-center align-items-center">
                         <div class="col-lg-6">
-                            <img src="{{ asset('Logo_KantinPintar.jpg') }}" alt="" class="w-100">
+                            <img src="{{ asset('Logo_Dapoer.jpg') }}" alt="" class="w-100">
                         </div>
                         <div class="col-lg-6 justify-content-center align-items-center">
                             <div class="p-5">
@@ -42,7 +42,7 @@
                                             </span>
                                         @enderror
                                     </div>
-                                    <button type="Submit" class="btn btn-primary btn-user btn-block">
+                                    <button type="Submit" class="btn btn-info btn-user btn-block">
                                         Login
                                     </button>
                                 </form>

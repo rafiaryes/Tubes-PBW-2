@@ -187,8 +187,8 @@
             <div class="form-group">
                 <input type="radio" id="html" value="pay_in_casheer" name="payment_method" checked>
                 <label for="html">Bayar di kasir</label><br>
-                <input type="radio" id="html" value="pay_here" name="payment_method">
-                <label for="html">Bayar di sini</label><br>
+                <!-- <input type="radio" id="html" value="pay_here" name="payment_method">
+                <label for="html">Bayar di sini</label><br> -->
                 <input type="radio" id="html" value="pay_online" name="payment_method">
                 <label for="html">Bayar Online</label><br>
                 @error('payment_method')
