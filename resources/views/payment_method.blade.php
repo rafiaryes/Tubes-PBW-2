@@ -139,72 +139,153 @@
 
             <div class="form-group">
                 <label for="name">Nama</label>
-                <input name="name" class="form-control @error('name') is-invalid @enderror"
-                    required>{{ old('name') }}</input>
-                @error('name')
-                    <span class="invalid-feedback d-block" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
+                <input name="name" class="form-control" required value="{{ old('name') }}">
+                <span class="invalid-feedback d-block" id="error-name"></span>
             </div>
 
             <div class="form-group">
                 <label for="email">Email</label>
-                <input name="email" class="form-control @error('email') is-invalid @enderror"
-                    required>{{ old('email') }}</input>
-                @error('email')
-                    <span class="invalid-feedback d-block" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
+                <input name="email" class="form-control" required value="{{ old('email') }}">
+                <span class="invalid-feedback d-block" id="error-email"></span>
             </div>
 
             <div class="form-group">
                 <label for="nophone">No Handphone</label>
-                <input name="nophone" class="form-control @error('nophone') is-invalid @enderror"
-                    required>{{ old('nophone') }}</input>
-                @error('nophone')
-                    <span class="invalid-feedback d-block" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
+                <input name="nophone" class="form-control" required value="{{ old('nophone') }}">
+                <span class="invalid-feedback d-block" id="error-nophone"></span>
             </div>
 
             <label for="order_method">Metode pemesanan</label>
             <div class="form-group">
-                <input type="radio" id="html" value="dine_in" name="order_method">
-                <label for="html">Makan Disini</label><br>
-                <input type="radio" id="html" value="takeaway" name="order_method">
-                <label for="html">Bawa Pulang</label><br>
-                @error('order_method')
-                    <span class="invalid-feedback d-block" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
+                <input type="radio" id="dine_in" value="dine_in" name="order_method">
+                <label for="dine_in">Makan Disini</label><br>
+                <input type="radio" id="takeaway" value="takeaway" name="order_method">
+                <label for="takeaway">Bawa Pulang</label><br>
+                <span class="invalid-feedback d-block" id="error-order_method"></span>
             </div>
 
-            <label for="payment_method">Metode Pembayaran</label>
-            <div class="form-group">
-                <input type="radio" id="html" value="pay_in_casheer" name="payment_method" checked>
-                <label for="html">Bayar di kasir</label><br>
-                <!-- <input type="radio" id="html" value="pay_here" name="payment_method">
-                <label for="html">Bayar di sini</label><br> -->
-                <input type="radio" id="html" value="pay_online" name="payment_method">
-                <label for="html">Bayar Online</label><br>
-                @error('payment_method')
-                    <span class="invalid-feedback d-block" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
+            {{-- <label for="payment_method">Metode Pembayaran</label> --}}
+            <div class="form-group" style="display: none">
+                <input type="radio" id="pay_in_casheer" value="pay_in_casheer" name="payment_method" checked>
+                <label for="pay_in_casheer">Bayar di kasir</label><br>
+                {{-- <input type="radio" id="pay_online" value="pay_online" name="payment_method">
+                <label for="pay_online">Bayar Online</label><br> --}}
+                <span class="invalid-feedback d-block" id="error-payment_method"></span>
             </div>
         </form>
 
-        <button class="rounded btn btn-dark fs-3 btn-order" onclick="submitOrderForm()"
+        <button class="rounded btn btn-dark fs-3 btn-order" id="submitOrderBtn"
             style="background: #2D9CAD; color: #FEF8F8; height: 60px; width: 25%">
             Bayar
         </button>
     </div>
     <script>
+        window.onload = function() {
+            var paymentMethod = localStorage.getItem('payment_method');
+            var orderMethod = localStorage.getItem('order_method');
+            var userId = localStorage.getItem('userUid')
+
+            if (userId) {
+                document.getElementById('user_id').value = userId;
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: "Mohon refresh page",
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end',
+                    timerProgressBar: true,
+                    timer: 3000
+                }).then(() => {
+                    window.location.href = "{{ route('user.home') }}";
+                });
+                return;
+            }
+            if (orderMethod) {
+                let radio = document.querySelector(`input[name="order_method"][value="${orderMethod}"]`);
+                if (radio) radio.checked = true;
+            }
+            if (paymentMethod) {
+                let radio = document.querySelector(`input[name="payment_method"][value="${paymentMethod}"]`);
+                if (radio) radio.checked = true;
+            }
+        };
+
+        // AJAX submit
+        document.getElementById('submitOrderBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // Clear previous errors
+            ['name', 'email', 'nophone', 'order_method', 'payment_method'].forEach(function(field) {
+                document.getElementById('error-' + field).innerText = '';
+                let input = document.querySelector('[name="' + field + '"]');
+                if (input) input.classList.remove('is-invalid');
+            });
+
+            let form = document.getElementById('orderForm');
+            let formData = new FormData(form);
+
+            fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(async response => {
+                    let data = await response.json();
+                    if (!response.ok) throw data;
+                    return data;
+                })
+                .then(data => {                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: data.message || 'Order berhasil!',
+                        timerProgressBar: true,
+                        showConfirmButton: true,
+                        confirmButtonText: 'OK',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                    }).then((result) => {
+                        // result.isConfirmed akan true jika tombol OK ditekan
+                        if (result.isConfirmed) {
+                            if (data.data && data.data.redirect_url) {
+                                window.location.href = data.data.redirect_url;
+                            } else {
+                                window.location.href = "{{ route('user.home') }}";
+                            }
+                        }
+                    });
+                    return;
+                })
+                .catch(error => {
+                    if (error && error.errors) {
+                        // Validation error
+                        Object.keys(error.errors).forEach(function(field) {
+                            let el = document.querySelector('[name="' + field + '"]');
+                            if (el) el.classList.add('is-invalid');
+                            let errEl = document.getElementById('error-' + field);
+                            if (errEl) errEl.innerText = error.errors[field][0];
+                        });
+                        Swal.fire({
+                            icon: 'error',
+                            title: error.message || 'Validasi gagal',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: error && error.message ? error.message : 'Gagal membuat order',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                });
+        });
+    </script>
+    {{-- <script>
         window.onload = function() {
             var paymentMethod = localStorage.getItem('payment_method');
             var orderMethod = localStorage.getItem('order_method');
@@ -241,7 +322,7 @@
             // Submit the form
             document.getElementById('orderForm').submit();
         }
-    </script>
+    </script> --}}
 </x-user-layout>
 
 {{-- <x-user-layout>

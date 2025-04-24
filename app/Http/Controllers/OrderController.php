@@ -78,8 +78,26 @@ class OrderController extends Controller
 
     public function makeOrder(Request $request)
     {
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|string',
+            'payment_method' => 'required|in:pay_in_casheer,pay_online',
+            'order_method' => 'required|in:dine_in,takeaway',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'nophone' => 'required|string|max:20',
+        ]);
 
-        DB::beginTransaction(); // Start the transaction
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => true,
+                'code' => 422,
+                'message' => 'Mohon lengkapi semua data!',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        DB::beginTransaction();
 
         try {
             $userId = $request->input('user_id');
@@ -94,7 +112,11 @@ class OrderController extends Controller
                 ->first();
 
             if (!$order) {
-                return redirect()->route('user.home')->with('error', 'No active order found.');
+                return response()->json([
+                    'error' => true,
+                    'code' => 404,
+                    'message' => 'No active order found.',
+                ], 404);
             }
 
             $order->name = $name;
@@ -105,33 +127,40 @@ class OrderController extends Controller
             $order->status = 'waiting_for_payment';
             $order->save();
 
-            if ($paymentMethod == 'pay_online') {
-                $midtransService = new MidtransService();
-                $snapToken = $midtransService->createSnapToken($order);
+            $data = [
+                'order_id' => $order->id,
+            ];
 
-                $payment = new Payment();
-                $payment->order_id = $order->id;
-                $payment->snap_token = $snapToken;
-                $payment->status = 'pending';
-                $payment->expired_at = now()->addMinutes(30);
-                $payment->save();
-            }
+            // if ($paymentMethod == 'pay_online') {
+            //     $midtransService = new MidtransService();
+            //     $snapToken = $midtransService->createSnapToken($order);
+
+            //     $payment = new Payment();
+            //     $payment->order_id = $order->id;
+            //     $payment->snap_token = $snapToken;
+            //     $payment->status = 'pending';
+            //     $payment->expired_at = now()->addMinutes(30);
+            //     $payment->save();
+
+            //     $data['redirect_url'] = route('user.payment.midtrans', ['order_id' => $order->id]);
+            // }
 
             DB::commit();
 
-            if ($paymentMethod === 'pay_online') {
-                return redirect()->route('user.payment.midtrans', ['order_id' => $order->id]); // Pindah ke halaman pembayaran Midtrans
-            }
+            return response()->json([
+                'error' => false,
+                'code' => 200,
+                'message' => 'Terima kasih! Anda telah berhasil membuat pesanan. SIlahkan untuk melakukan pembayaran di kasir kami.',
+                'data' => $data,
+            ], 200);
 
-            session()->flash('success', 'Berhasil membuat order!');
-            return redirect()->route('user.home'); // Redirect to a success page
         } catch (\Exception $e) {
-            // Rollback the transaction in case of error
             DB::rollback();
-
-            // Flash error message and redirect back
-            session()->flash('error', 'Gagal membuat order. Tolong coba lagi.');
-            return back();
+            return response()->json([
+                'error' => true,
+                'code' => 500,
+                'message' => 'Something went wrong!',
+            ], 500);
         }
     }
 
