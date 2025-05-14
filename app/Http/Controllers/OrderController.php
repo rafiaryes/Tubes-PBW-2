@@ -129,10 +129,10 @@ class OrderController extends Controller
             $order->no_meja = $noMeja;
             $order->status = 'waiting_for_payment';
             // total price
-            $orderItems = OrderItem::where('order_id', $order->id);
+            $orderItems = $order->items;
             $total_price = 0;
             foreach($orderItems as $orderItem) {
-                $total_price += $orderItem->price;
+                $total_price += (float) $orderItem->price;
             }
             $order->total_price = $total_price;
             $order->save();
