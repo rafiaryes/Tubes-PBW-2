@@ -60,10 +60,10 @@
                             <tbody>
                                 @foreach($order->items as $item)
                                     <tr>
-                                        <td>{{ $item->menu->nama ?? '-' }}</td>
-                                        <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+                                        <td>{{ $item->menu->nama ?? '-' }}</td>                                        
+                                        <td>Rp {{ number_format($item->menu->price, 0, ',', '.') }}</td>
                                         <td>{{ $item->quantity }}</td>
-                                        <td>Rp {{ number_format($item->price * $item->quantity, 0, ',', '.') }}</td>
+                                        <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
