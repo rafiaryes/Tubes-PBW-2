@@ -129,7 +129,12 @@ class OrderController extends Controller
             $order->no_meja = $noMeja;
             $order->status = 'waiting_for_payment';
             // total price
-            $order->total_price = $order->items->sum('price');
+            $orderItems = OrderItem::where('order_id', $order->id);
+            $total_price = 0;
+            foreach($orderItems as $orderItem) {
+                $total_price += $orderItem->price;
+            }
+            $order->total_price = $total_price;
             $order->save();
 
             $data = [
@@ -290,7 +295,7 @@ class OrderController extends Controller
                             ' . $statusSelect . '
                         </div>
                     ';
-                })                
+                })
                 ->editColumn('payment_method', function ($order) {
                     return $order->payment_method == 'pay_online' ? 'Pay Online' : 'Pay in Cashier';
                 })
