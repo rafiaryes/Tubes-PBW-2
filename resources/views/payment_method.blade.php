@@ -143,16 +143,22 @@
                 <span class="invalid-feedback d-block" id="error-name"></span>
             </div>
 
-            <div class="form-group">
+            {{-- <div class="form-group">
                 <label for="email">Email</label>
                 <input name="email" class="form-control" required value="{{ old('email') }}">
                 <span class="invalid-feedback d-block" id="error-email"></span>
-            </div>
+            </div> --}}
 
             <div class="form-group">
                 <label for="nophone">No Handphone</label>
                 <input name="nophone" class="form-control" required value="{{ old('nophone') }}">
                 <span class="invalid-feedback d-block" id="error-nophone"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="no_meja">No Meja</label>
+                <input type="number" name="no_meja" class="form-control" required value="{{ old('no_meja') }}">
+                <span class="invalid-feedback d-block" id="error-no_meja"></span>
             </div>
 
             <label for="order_method">Metode pemesanan</label>
@@ -165,12 +171,20 @@
             </div>
 
             {{-- <label for="payment_method">Metode Pembayaran</label> --}}
-            <div class="form-group" style="display: none">
+            <label for="payment_method">Metode Pembayaran</label>
+            <div class="form-group">
                 <input type="radio" id="pay_in_casheer" value="pay_in_casheer" name="payment_method" checked>
                 <label for="pay_in_casheer">Bayar di kasir</label><br>
-                {{-- <input type="radio" id="pay_online" value="pay_online" name="payment_method">
-                <label for="pay_online">Bayar Online</label><br> --}}
+                <!-- <input type="radio" id="html" value="pay_here" name="payment_method">
+                <label for="html">Bayar di sini</label><br> -->
+                <input type="radio" id="pay_online" value="pay_online" name="payment_method">
+                <label for="pay_online">Bayar Online Qris</label><br>
                 <span class="invalid-feedback d-block" id="error-payment_method"></span>
+                @error('payment_method')
+                    <span class="invalid-feedback d-block" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
             </div>
         </form>
 
@@ -216,7 +230,9 @@
             e.preventDefault();
 
             // Clear previous errors
-            ['name', 'email', 'nophone', 'order_method', 'payment_method'].forEach(function(field) {
+            ['name', 'nophone', 'order_method', 'payment_method', 'no_meja'].forEach(function(field) {
+                console.log(field);
+                console.log(document.getElementById('error-' + field))
                 document.getElementById('error-' + field).innerText = '';
                 let input = document.querySelector('[name="' + field + '"]');
                 if (input) input.classList.remove('is-invalid');
@@ -238,7 +254,7 @@
                     if (!response.ok) throw data;
                     return data;
                 })
-                .then(data => {                    
+                .then(data => {
                     Swal.fire({
                         icon: 'success',
                         title: data.message || 'Order berhasil!',
@@ -279,7 +295,13 @@
                             icon: 'error',
                             title: error && error.message ? error.message : 'Gagal membuat order',
                             showConfirmButton: false,
-                            timer: 1500
+                            timer: 3000
+                        }).then((result) => {
+                            if (data.data && data.data.redirect_url) {
+                                window.location.href = data.data.redirect_url;
+                            } else {
+                                window.location.href = "{{ route('user.home') }}";
+                            }
                         });
                     }
                 });

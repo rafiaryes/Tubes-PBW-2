@@ -8,11 +8,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Models\Menu;
+use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\FacadesDB;
 use Illuminate\Support\Facades\Route;
 use Yajra\DataTables\Facades\DataTables;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 Route::name('user.')->group(function () {
     Route::get('/', function () {
@@ -21,7 +24,20 @@ Route::name('user.')->group(function () {
     Route::get('/order-method', function () {
         return view("order_method");
     })->name('order_method');
-    Route::get('/payment-method', function () {
+    Route::get('/payment-method', function (Request $request) {
+
+        if($request->user_id == null){
+            return redirect()->route('user.home');
+        }
+
+        $order = Order::where('user_id', $request->user_id)
+            ->where('status', 'cart')
+            ->first();
+
+        if (!$order) {
+            return redirect()->route('user.home');
+        }
+
         return view("payment_method");
     })->name('payment_method');
 
@@ -84,12 +100,123 @@ Route::name('user.')->group(function () {
     Route::get('/cart/{itemId}/update', [OrderController::class, 'updateQuantity'])->name("update-cart");
 
     Route::get('/payment/midtrans/{order_id}', [PaymentController::class, 'midtrans'])->name('payment.midtrans');
+    Route::get('/payment/qris/{order_id}', [PaymentController::class, 'qris'])->name('payment.qris');
+    Route::get('/payment/qris', [PaymentController::class, 'qris'])->name('payment.qris');
     Route::post('/payment/midtrans-callback', [PaymentController::class, 'midtransCallback']);
+
+    Route::get('/history-orders', function (Request $request) {
+        $userId = $request->user_id ?? request()->user_id ?? null;
+        if (!$userId) {
+            $ordersHtml = '<div class="empty-state w-100">User tidak ditemukan.</div>';
+        } else {
+            $orders = \App\Models\Order::with('items.menu', 'payments')
+                ->where('user_id', $userId)
+                ->where('status', '!=', 'cart')
+                ->orderByDesc('created_at')
+                ->get();
+            dd($orders);
+
+            // Cek status pembayaran ke Midtrans untuk setiap order yang waiting_for_payment & pay_online
+            foreach ($orders as $order) {
+                $order->can_continue_payment = false;
+                $order->midtrans_status = null;
+                if (
+                    $order->status === 'waiting_for_payment'
+                    && $order->payment_method === 'pay_online'
+                    && $order->payments->count() > 0
+                    && $order->payments->last()->snap_token
+                ) {
+                    try {
+                        \Midtrans\Config::$serverKey = config('midtrans.server_key');
+                        \Midtrans\Config::$isProduction = config('midtrans.is_production');
+                        \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized');
+                        \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
+                        $status = \Midtrans\Transaction::status($order->id);
+                        $order->midtrans_status = $status->transaction_status ?? null;
+                        $order->can_continue_payment = $order->midtrans_status === 'pending';
+                    } catch (\Exception $e) {
+                        $order->midtrans_status = null;
+                    }
+                }
+            }
+
+            $ordersHtml = view('partials.history_orders_list', compact('orders'))->render();
+        }
+        return view('history_orders', compact('ordersHtml'));
+    })->name('history-orders');
+
+    Route::get('/history-orders-data', function (Request $request) {
+        $orders = \App\Models\Order::with('items.menu')
+            ->where('user_id', $request->user_id)
+            ->where('status', '!=', 'cart')
+            ->orderByDesc('created_at')
+            ->get();
+        $ordersHtml = view('partials.history_orders_list', compact('orders'))->render();
+        return response()->json(['html' => $ordersHtml]);
+    })->name('get-history-orders');
+
+    Route::get('/history-order-detail', function (Request $request) {
+        $order = \App\Models\Order::with('items.menu')
+            ->where('id', $request->order_id)
+            ->first();
+        if (!$order) return response()->json(['html' => '<div class="alert alert-danger">Order tidak ditemukan.</div>']);
+        $html = view('partials.history_order_detail', compact('order'))->render();
+        return response()->json(['html' => $html]);
+    })->name('get-history-order-detail');
+});
+
+ // Tambahkan endpoint untuk cek status pembayaran (AJAX)
+Route::get('/api/payment-status', function (Request $request) {
+    $order = \App\Models\Order::where('id', $request->order_id)->first();
+    $status = $order?->status ?? 'unknown';
+    $statusText = match ($status) {
+        'pick_up', 'finished' => 'Lunas',
+        'waiting_for_payment' => 'Menunggu Pembayaran',
+        'canceled' => 'Dibatalkan',
+        default => ucfirst(str_replace('_', ' ', $status)),
+    };
+
+    // Cek status ke Midtrans jika waiting_for_payment dan pay_online
+    $midtrans_status = null;
+    $can_continue_payment = false;
+    $expired_at = null;
+    if ($order && $order->status === 'waiting_for_payment' && $order->payment_method === 'pay_online') {
+        $payment = $order->payments()->latest()->first();
+        if ($payment && $payment->snap_token) {
+            try {
+                \Midtrans\Config::$serverKey = config('midtrans.server_key');
+                \Midtrans\Config::$isProduction = config('midtrans.is_production');
+                \Midtrans\Config::$isSanitized = config('midtrans.is_sanitized');
+                \Midtrans\Config::$is3ds = config('midtrans.is_3ds');
+                $payment = $order->payments()->latest()->first();
+                $midtrans = \Midtrans\Transaction::status($payment->snap_token);
+                $midtrans_status = $midtrans->transaction_status ?? null;
+                $can_continue_payment = $midtrans_status === 'pending';
+                $expired_at = Carbon::parse($midtrans->expiry_time);
+                $now = Carbon::now();
+                if ($expired_at && $now->greaterThan($expired_at)) {
+                    $can_continue_payment = false;
+                }
+            } catch (\Exception $e) {
+                dd($e);
+                $midtrans_status = null;
+            }
+        }
+    }
+
+    return response()->json([
+        'status' => $status,
+        'status_text' => $statusText,
+        'midtrans_status' => $midtrans_status,
+        'can_continue_payment' => $can_continue_payment,
+        'expired_at' => $expired_at,
+        'now' => now()->timestamp,
+    ]);
 });
 
 Route::get('/dashboard', function () {
     // Check if the current user is an admin
-    $isAdmin = auth()->user()->role == 'admin';
+    $isAdmin = auth()->user()->hasRole('admin');
 
     // Pendapatan Bulanan
     $monthlyEarnings = DB::table('orders')
@@ -168,6 +295,9 @@ Route::get('/dashboard', function () {
 
     $paymentMethodsData = DB::table('orders')
         ->select('payment_method', DB::raw('COUNT(*) as total_orders'))
+        ->when(!$isAdmin, function ($query) {
+            $query->where('orders.kasir_id', auth()->user()->id);
+        })
         ->groupBy('payment_method')
         ->get();
 
@@ -179,10 +309,66 @@ Route::get('/dashboard', function () {
         $orderCounts[] = $data->total_orders; // Order counts for each payment method
     }
 
+    if(count($paymentMethods) == 0){
+        $paymentMethods = ['pay_in_cashier', 'pay_online'];
+        $orderCounts = [0, 0];
+    }
+
     // Return data ke view
     return view('admin.dashboard', compact('monthlyEarnings', 'annualEarnings', 'totalOrders', 'topMenu', 'earningsData', 'months', 'paymentMethods', 'orderCounts'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Route print dashboard
+Route::get('/dashboard/print', function (Request $request) {
+    $isAdmin = auth()->user()->hasRole('admin');
+    $tahun = $request->tahun ?? now()->year;
+    $isBulanan = !($request->bulanan === "0" || $request->bulanan === 0);
+
+    if ($isBulanan) {
+        $bulan = (int) ($request->bulan ?? now()->month); // pastikan integer
+        $ordersQuery = \App\Models\Order::with(['items.menu', 'kasir'])
+            ->where('status', 'finished')
+            ->whereMonth('created_at', $bulan)
+            ->whereYear('created_at', $tahun);
+        $bulanNama = \Carbon\Carbon::create()->month($bulan)->translatedFormat('F');
+    } else {
+        $ordersQuery = \App\Models\Order::with(['items.menu', 'kasir'])
+            ->where('status', 'finished')
+            ->whereYear('created_at', $tahun);
+        $bulan = null;
+        $bulanNama = null;
+    }
+
+    if (!$isAdmin) {
+        $ordersQuery->where('kasir_id', auth()->user()->id);
+    }
+
+    $orders = $ordersQuery->orderBy('kasir_id')->orderBy('created_at')->get();
+
+    $grouped = $isAdmin
+        ? $orders->groupBy('kasir_id')
+        : collect([auth()->user()->id => $orders]);
+
+    // orders group by again by user_id
+    $grouped = $grouped->map(function ($orders) {
+        return $orders->groupBy('user_id');
+    });
+    
+    $pdf = Pdf::loadView('admin.dashboard_print', [
+        'grouped' => $grouped,
+        'bulan' => $bulan,
+        'tahun' => $tahun,
+        'bulanNama' => $bulanNama,
+        'isAdmin' => $isAdmin,
+        'isBulanan' => $isBulanan,
+    ])->setPaper('a4', 'landscape');
+
+    $filename = $isBulanan
+        ? "rekapan_dashboard_{$bulan}_{$tahun}.pdf"
+        : "rekapan_dashboard_tahunan_{$tahun}.pdf";
+
+    return $pdf->stream($filename);
+})->middleware(['auth', 'verified'])->name('dashboard.print');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -72,7 +72,7 @@ class OrderController extends Controller
             return response()->json(['message' => 'Item berhasil ditambahkan ke keranjang'], 200);
         } catch (\Exception $e) {
             DB::rollback();
-            return response()->json(['message' => 'Gagal menambahkan item', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => $e->getMessage(), 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -84,8 +84,9 @@ class OrderController extends Controller
             'payment_method' => 'required|in:pay_in_casheer,pay_online',
             'order_method' => 'required|in:dine_in,takeaway',
             'name' => 'required|string|max:255',
-            'email' => 'required|email',
+            // 'email' => 'required|email',
             'nophone' => 'required|string|max:20',
+            'no_meja' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -104,8 +105,9 @@ class OrderController extends Controller
             $paymentMethod = $request->input('payment_method');
             $orderMethod = $request->input('order_method');
             $name = $request->name;
-            $email = $request->email;
+            // $email = $request->email;
             $noPhone = $request->nophone;
+            $noMeja = $request->no_meja;
 
             $order = Order::where('user_id', $userId)
                 ->where('status', 'cart')
@@ -115,45 +117,50 @@ class OrderController extends Controller
                 return response()->json([
                     'error' => true,
                     'code' => 404,
-                    'message' => 'No active order found.',
+                    'message' => 'Order Active tidak ditemukan.',
                 ], 404);
             }
 
             $order->name = $name;
-            $order->email = $email;
+            // $order->email = $email;
             $order->payment_method = $paymentMethod;
             $order->order_method = $orderMethod;
             $order->nophone = $noPhone;
+            $order->no_meja = $noMeja;
             $order->status = 'waiting_for_payment';
+            // total price
+            $order->total_price = $order->items->sum('price');
             $order->save();
 
             $data = [
                 'order_id' => $order->id,
             ];
 
-            // if ($paymentMethod == 'pay_online') {
-            //     $midtransService = new MidtransService();
-            //     $snapToken = $midtransService->createSnapToken($order);
+            if ($paymentMethod == 'pay_online') {
+                $midtransService = new \App\Services\MidtransService();
+                $qrisResponse = $midtransService->createQrisPayment($order);
+                $payment = new Payment();
+                $payment->order_id = $order->id;
+                $payment->snap_token = $qrisResponse->transaction_id ?? null;
+                $payment->qr_url = $qrisResponse->actions[0]->url;
+                $payment->qr_string = $qrisResponse->qr_string;
+                $payment->status = 'pending';
+                $payment->expired_at = now()->addMinutes(30);
+                $payment->save();
 
-            //     $payment = new Payment();
-            //     $payment->order_id = $order->id;
-            //     $payment->snap_token = $snapToken;
-            //     $payment->status = 'pending';
-            //     $payment->expired_at = now()->addMinutes(30);
-            //     $payment->save();
-
-            //     $data['redirect_url'] = route('user.payment.midtrans', ['order_id' => $order->id]);
-            // }
+                $data['redirect_url'] = route('user.payment.qris', ['order_id' => $order->id]);
+            }
 
             DB::commit();
+
+            $message = $paymentMethod == 'pay_online' ? 'Silahkan lakukan pembayaran dengan QRIS' : 'Silahkan lakukan pembayaran di kasir kami';
 
             return response()->json([
                 'error' => false,
                 'code' => 200,
-                'message' => 'Terima kasih! Anda telah berhasil membuat pesanan. SIlahkan untuk melakukan pembayaran di kasir kami.',
+                'message' => $message,
                 'data' => $data,
             ], 200);
-
         } catch (\Exception $e) {
             DB::rollback();
             return response()->json([
@@ -228,10 +235,19 @@ class OrderController extends Controller
     public function orderList(Request $request)
     {
         if ($request->ajax()) {
-            $orders = Order::whereIn('status', ['waiting_for_payment', 'pick_up'])
-                ->whereNull('kasir_id')
+            $orders = Order::where(function ($query) {
+                $query->where(function ($q) {
+                    $q->whereNull('kasir_id')
+                        ->where('status', 'waiting_for_payment');
+                })->orWhere(function ($q) {
+                    $q->where('payment_method', 'pay_online')
+                        ->whereNotIn('status', ['canceled', 'waiting_for_payment'])
+                        ->whereNull('kasir_id');
+                });
+            })
                 ->latest()
                 ->get();
+
 
             return DataTables::of($orders)
                 ->addIndexColumn()
@@ -243,8 +259,6 @@ class OrderController extends Controller
                     // Status options for the dropdown
                     $statusOptions = [
                         'waiting_for_payment' => 'Waiting for Payment',
-                        'on_progress' => 'On Progress',
-                        'pick_up' => 'Pick Up',
                         'finished' => 'Finished',
                         'canceled' => 'Canceled'
                     ];
@@ -252,13 +266,20 @@ class OrderController extends Controller
                     // Create a select dropdown with the available statuses
                     $statusSelect = '<form action="' . $updateStatusUrl . '" method="POST" style="display:flex; width: auto;">';
                     $statusSelect .= csrf_field(); // Add CSRF token
-                    $statusSelect .= '<select name="status" class="status-select form-control" data-order-id="' . $order->id . '" style="max-width: 120px; margin-right: 10px;">';
-                    foreach ($statusOptions as $status => $label) {
-                        $selected = ($order->status == $status) ? 'selected' : '';
-                        $statusSelect .= '<option value="' . $status . '" ' . $selected . '>' . $label . '</option>';
+
+                    if ($order->payment_method != 'pay_online') {
+                        $statusSelect .= '<select name="status" class="status-select form-control" data-order-id="' . $order->id . '" style="max-width: 120px; margin-right: 10px;">';
+                        foreach ($statusOptions as $status => $label) {
+                            $selected = ($order->status == $status) ? 'selected' : '';
+                            $statusSelect .= '<option value="' . $status . '" ' . $selected . '>' . $label . '</option>';
+                        }
+                        $statusSelect .= '</select>';
+                        $statusSelect .= '<button type="submit" class="btn btn-success btn-sm" style="margin-right: 10px;">Update Status</button>';
+                    } else if($order->payment_method == 'pay_online' && $order->status == 'finished') {
+                        $statusSelect .= '<button type="submit" class="btn btn-success btn-sm" style="margin-right: 10px;">Konfirmasi pesanan</button>';
                     }
-                    $statusSelect .= '</select>';
-                    $statusSelect .= '<button type="submit" class="btn btn-success btn-sm" style="margin-right: 10px;">Update Status</button>';
+
+                    $statusSelect .= '<input name="payment_method" value="' . $order->payment_method . '" type="hidden">';
                     $statusSelect .= '<input name="type" value="order" type="hidden">';
                     $statusSelect .= '</form>';
 
@@ -269,13 +290,14 @@ class OrderController extends Controller
                             ' . $statusSelect . '
                         </div>
                     ';
+                })                
+                ->editColumn('payment_method', function ($order) {
+                    return $order->payment_method == 'pay_online' ? 'Pay Online' : 'Pay in Cashier';
                 })
                 ->editColumn('status', function ($order) {
                     // Define colors based on the status
                     $statusClasses = [
                         'waiting_for_payment' => 'bg-warning text-dark', // Yellow background
-                        'on_progress' => 'On Progress',
-                        'pick_up' => 'bg-info text-white', // Blue background
                         'finished' => 'bg-success text-white', // Green background
                         'canceled' => 'bg-danger text-white' // Red background
                     ];
@@ -316,8 +338,6 @@ class OrderController extends Controller
                     // Status options for the dropdown
                     $statusOptions = [
                         'waiting_for_payment' => 'Waiting for Payment',
-                        'on_progress' => 'On Progress',
-                        'pick_up' => 'Pick Up',
                         'finished' => 'Finished',
                         'canceled' => 'Canceled'
                     ];
@@ -325,13 +345,19 @@ class OrderController extends Controller
                     // Create a select dropdown with the available statuses
                     $statusSelect = '<form action="' . $updateStatusUrl . '" method="POST" style="display:flex; width: auto;">';
                     $statusSelect .= csrf_field(); // Add CSRF token
-                    $statusSelect .= '<select name="status" class="status-select form-control" data-order-id="' . $order->id . '" style="max-width: 120px; margin-right: 10px;">';
-                    foreach ($statusOptions as $status => $label) {
-                        $selected = ($order->status == $status) ? 'selected' : '';
-                        $statusSelect .= '<option value="' . $status . '" ' . $selected . '>' . $label . '</option>';
+                    if ($order->payment_method != 'pay_online') {
+                        $statusSelect .= '<select name="status" class="status-select form-control" data-order-id="' . $order->id . '" style="max-width: 120px; margin-right: 10px;">';
+                        foreach ($statusOptions as $status => $label) {
+                            $selected = ($order->status == $status) ? 'selected' : '';
+                            $statusSelect .= '<option value="' . $status . '" ' . $selected . '>' . $label . '</option>';
+                        }
+                        $statusSelect .= '</select>';
+                        $statusSelect .= '<button type="submit" class="btn btn-success btn-sm" style="margin-right: 10px;">Update Status</button>';
+                    } else {
+                        // $statusSelect .= '<button type="submit" class="btn btn-success btn-sm" style="margin-right: 10px;">Konfirmasi pesanan</button>';
                     }
-                    $statusSelect .= '</select>';
-                    $statusSelect .= '<button type="submit" class="btn btn-success btn-sm" style="margin-right: 10px;">Update Status</button>';
+
+                    $statusSelect .= '<input name="payment_method" value="' . $order->payment_method . '" type="hidden">';
                     $statusSelect .= '<input name="type" value="historyOrder" type="hidden">';
                     $statusSelect .= '</form>';
 
@@ -377,7 +403,7 @@ class OrderController extends Controller
         return view('order-detail', [
             'order' => $order,
             'route' => route('update-status-order', ['id' => $id]),
-            'statuses' => ['waiting_for_payment', 'on_progress', 'pick_up', 'finished', 'canceled'], // Updated statuses
+            'statuses' => ['waiting_for_payment', 'finished', 'canceled'], // Updated statuses
             'type' => $request->type
         ]);
     }
@@ -385,11 +411,14 @@ class OrderController extends Controller
     public function updateStatusOrder(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:waiting_for_payment,pick_up,on_progress,finished,canceled',
+            'status' => 'required_if:payment_method,pay_on_cashier|in:waiting_for_payment,pick_up,on_progress,finished,canceled',
+            'payment_method' => 'required|in:pay_online,pay_in_casheer',
         ]);
 
         $order = Order::findOrFail($id);
-        $order->status = $request->status;
+        if($order->payment_method != 'pay_online') {
+            $order->status = $request->status;
+        }
         $order->kasir_id = auth()->user()->id;
         $order->save();
 

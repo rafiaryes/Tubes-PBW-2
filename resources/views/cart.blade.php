@@ -107,8 +107,6 @@
         $(document).ready(function() {
             const userId = localStorage.getItem('userUid')
 
-            console.log(userId)
-
             function updateCartDisplay() {
                 $('#cart-container').empty(); // Clear the container
                 let totalPrice = 0;
@@ -164,11 +162,10 @@
                     `);
                         });
 
-                        $('#add-btn').prop('disabled', false);
-                        console.log(totalPrice)
+                        $('#add-btn').prop('disabled', false);                        
                         $('#add-btn').on('click', function() {
                             // Redirect to the payment method page
-                            window.location.href = "{{ route('user.payment_method') }}";
+                            window.location.href = "{{ route('user.payment_method') }}" + "?user_id=" + userId;
                         });
                         $('#total-price').text("Rp. " + new Intl.NumberFormat('id-ID').format(
                             totalPrice));
@@ -207,8 +204,10 @@
                             response.total_price));
 
                     },
-                    error: function() {
-                        alert('Terjadi kesalahan saat memperbarui quantity.');
+                    // messager error #27272
+                    error: function(xhr) {
+                       alert(xhr.responseJSON.message);
+                        // console.error('Error updating quantity:', xhr);
                     }
                 });
             };

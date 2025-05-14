@@ -175,6 +175,12 @@
                                 <img src="{{ asset("cart-bag.svg") }}" alt="">
                             </a>
                         </div>
+                        <div class="d-flex justify-content-center align-items-center ms-2"
+                            style="width: 50px; height: 50px; border: 3px solid #EBE5DD; background-color: #2D9CAD; border-radius: 50%;">
+                            <a href="{{ route('user.history-orders') }}">
+                                <i class="bi bi-clock-history" style="font-size: 1.7rem; color: white;"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
 

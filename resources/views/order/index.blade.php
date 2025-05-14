@@ -26,6 +26,7 @@
                                 <th>No</th>
                                 <th>Nomor Pesanan</th>
                                 <th>Nama Pelanggan</th>
+                                <th>Payment Method</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -54,6 +55,10 @@
                         {
                             data: 'name',
                             name: 'name'
+                        },
+                        {
+                            data: 'payment_method',
+                            name: 'payment_method'
                         },
                         {
                             data: 'status',

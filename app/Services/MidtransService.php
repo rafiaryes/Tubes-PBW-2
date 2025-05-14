@@ -7,6 +7,7 @@ use Exception;
 use Midtrans\Config;
 use Midtrans\Notification;
 use Midtrans\Snap;
+use Midtrans\CoreApi;
 
 class MidtransService
 {
@@ -61,6 +62,38 @@ class MidtransService
             return Snap::getSnapToken($params);
         } catch (Exception $e) {
             // Menangani error jika gagal mendapatkan snap token
+            throw new Exception($e->getMessage());
+        }
+    }
+
+    /**
+     * Membuat QRIS payment menggunakan Core API.
+     * @param Order $order
+     * @return array
+     * @throws Exception
+     */
+    public function createQrisPayment(Order $order)
+    {
+        // Hitung gross_amount dari item_details (bukan dari order->items->sum)
+        $itemDetails = $this->mapItemsToDetails($order);
+        $grossAmount = array_sum(array_map(function($item) {
+            return $item['price'] * $item['quantity'];
+        }, $itemDetails));
+
+        $params = [
+            'payment_type' => 'qris',
+            'transaction_details' => [
+                'order_id' => $order->id,
+                'gross_amount' => (int) $grossAmount,
+            ],
+            'item_details' => $itemDetails,
+            'customer_details' => $this->getCustomerDetails($order),
+        ];
+
+        try {
+            $response = CoreApi::charge($params);
+            return $response;
+        } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
     }
@@ -150,6 +183,7 @@ class MidtransService
             'first_name' => $order->name, // Ganti dengan data nyata
             'email' => $order->email, // Ganti dengan data nyata
             'phone' => $order->nophone, // Ganti dengan data nyata
+            'no_meja' => $order->no_meja, // Ganti dengan data nyata
         ];
     }
 }

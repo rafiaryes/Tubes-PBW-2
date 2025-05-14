@@ -5,13 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\OrderItem;
+use App\Traits\HasCustomOrderNumber;
 
 class Order extends Model
 {
-    use HasUuids;
+    use HasCustomOrderNumber;
     protected $table = "orders";
+    protected $primaryKey = "id";
     protected $keyType = "string";
-    public $increment = false;
+    public $incrementing = false;
     protected $guarded = [
         ""
     ];
@@ -24,5 +26,11 @@ class Order extends Model
     public function payments()
     {
         return $this->hasOne(Payment::class);
+    }
+
+    // kasir
+    public function kasir()
+    {
+        return $this->hasOne(User::class, 'id', 'kasir_id');
     }
 }

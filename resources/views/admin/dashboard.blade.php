@@ -1,11 +1,30 @@
 <x-app-layout>
     <div class="container-fluid">
-        <!-- Page Heading -->
-        {{-- <div class="mb-4 d-sm-flex align-items-center justify-content-between">
-            <h1 class="mb-0 text-gray-800 h3">Dashboard</h1>
-            <a href="#" class="shadow-sm d-none d-sm-inline-block btn btn-sm btn-primary"><i
-                    class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
-        </div> --}}
+        <!-- Print Rekapan & Filter Bulan/Tahun -->
+        <div class="gap-3 mb-4 d-flex align-items-center flex-wrap">
+            <form id="printForm" action="{{ route('dashboard.print') }}" method="GET" target="_blank" class="gap-2 d-flex align-items-center flex-wrap">
+                <label for="bulan" class="mb-0">Bulan</label>
+                <select name="bulan" id="bulan" class="form-select" style="width:auto;">
+                    @foreach(range(1,12) as $m)
+                        <option value="{{ $m }}" {{ $m == now()->month ? 'selected' : '' }}>
+                            {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                        </option>
+                    @endforeach
+                </select>
+                <label for="tahun" class="mb-0 ms-2">Tahun</label>
+                <select name="tahun" id="tahun" class="form-select" style="width:auto;">
+                    @foreach(range(now()->year-5, now()->year) as $y)
+                        <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>{{ $y }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="btn btn-primary ms-2">Print Rekapan Bulanan</button>
+            </form>
+            <form id="printYearForm" action="{{ route('dashboard.print') }}" method="GET" target="_blank" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="tahun" value="{{ now()->year }}">
+                <input type="hidden" name="bulanan" value="0">
+                <button type="submit" class="btn btn-success">Print Rekapan Tahunan</button>
+            </form>
+        </div>
 
         <!-- Content Row -->
         <div class="row">
@@ -330,7 +349,7 @@
             // Data passed from the controller
             var paymentMethods = @json($paymentMethods); // Payment methods (labels)
             var orderCounts = @json($orderCounts); // Order counts for each payment method
-
+            console.log(paymentMethods);
             // Colors for each payment method (can be adjusted or dynamically generated)
             var colors = ['#4e73df', '#1cc88a', '#36b9cc', '#f1c40f', '#e74c3c', '#8e44ad', '#2ecc71', '#3498db'];
 
