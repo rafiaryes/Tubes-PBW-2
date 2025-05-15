@@ -44,7 +44,7 @@
                     <option selected>Pilih category</option>
                     <option value="makanan">Makanan</option>
                     <option value="minuman">Minuman</option>
-                    <option value="cemillan">Cemilan</option>
+                    <option value="cemilan">Cemilan</option>
                 </select>
                 @error('category')
                 <span class="invalid-feedback" role="alert">
