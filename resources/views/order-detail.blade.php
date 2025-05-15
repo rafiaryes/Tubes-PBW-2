@@ -19,6 +19,7 @@
         <h3>Order #{{ $order->id }}</h3>
         <p><strong>Status:</strong> {{ ucfirst(str_replace('_', ' ', $order->status)) }}</p>
         <p><strong>User:</strong> {{ $order->name ?? 'Guest' }}</p>
+        <p><strong>No Meja:</strong> {{ $order->no_meja ?? 'Guest' }}</p>
         <p><strong>Date:</strong> {{ $order->created_at->format('d M Y H:i') }}</p>
 
         <!-- Items -->

@@ -26,8 +26,8 @@
                     </div>
                 </div>
                 <div class="mb-2"><strong>Nama:</strong> {{ $order->name ?? '-' }}</div>
-                <div class="mb-2"><strong>Email:</strong> {{ $order->email ?? '-' }}</div>
                 <div class="mb-2"><strong>Phone:</strong> {{ $order->nophone ?? '-' }}</div>
+                <div class="mb-2"><strong>No Meja:</strong> {{ $order->no_meja ?? '-' }}</div>
                 <div><strong>Total:</strong> Rp {{ number_format($order->total_price,0,',','.') }}</div>
                 <div class="mt-2" id="continue-payment-btn-{{ $order->id }}"></div>
             </div>
