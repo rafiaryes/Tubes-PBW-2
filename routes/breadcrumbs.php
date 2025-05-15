@@ -52,7 +52,7 @@ Breadcrumbs::for('admin.master_data.permission.create', function (BreadcrumbTrai
 
 // Edit Permission
 Breadcrumbs::for('admin.master_data.permission.edit', function (BreadcrumbTrail $trail, $permission) {
-    $trail->parent('admin.master_data.permission.index');
+    $trail->parent('admin.master_data.role.index');
     $trail->push('Edit Permission', route('admin.master_data.permission.edit', $permission));
 });
 
